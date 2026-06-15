@@ -87,6 +87,7 @@ Included works:
 - Twelve Hours in Wuhan
 - When Masterpieces Audition
 - Super Sketch Show 2026 National Tour
+- MAP x Morandi Exhibition Trailer
 
 ## Video Strategy
 
@@ -96,7 +97,7 @@ The original local videos are much larger than a static site should ship directl
 - H.264 video
 - AAC audio
 - MP4 `faststart`
-- Around 121 MB total for 10 playable videos
+- Around 139 MB total for 11 playable videos
 
 This repository includes only the web playback versions under:
 
