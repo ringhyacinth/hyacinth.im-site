@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vibe Coding - Apple Sharing</title>
+  <style>
+    :root {
+      --bg: #d8d2c4;
+      --ink: #17202a;
+      --panel: rgba(255, 255, 255, 0.72);
+      --line: rgba(23, 32, 42, 0.16);
+      --shadow: 0 30px 90px rgba(23, 32, 42, 0.26);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.58), transparent 28%),
+        linear-gradient(135deg, #d8d2c4 0%, #ece8dc 58%, #c9d8d3 100%);
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: clamp(10px, 2.6vmin, 34px);
+    }
+
+    .slide-frame {
+      position: relative;
+      width: min(100%, calc((100vh - clamp(20px, 5.2vmin, 68px)) * 16 / 9));
+      aspect-ratio: 16 / 9;
+      border-radius: clamp(10px, 1.2vmin, 18px);
+      overflow: hidden;
+      background: #f7f5ef;
+      box-shadow: var(--shadow);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transform: scale(1.012);
+      transition: opacity 260ms ease, transform 420ms ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    .controls {
+      position: fixed;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      box-shadow: 0 18px 48px rgba(23, 32, 42, 0.16);
+      backdrop-filter: blur(18px);
+      transform: translateX(-50%);
+      transition: opacity 220ms ease;
+    }
+
+    body.idle .controls {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--ink);
+      font-size: 25px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    button:hover,
+    button:focus-visible {
+      outline: none;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(23, 32, 42, 0.12);
+    }
+
+    .counter {
+      min-width: 74px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: rgba(23, 32, 42, 0.72);
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: rgba(23, 32, 42, 0.08);
+      z-index: 9;
+    }
+
+    .progress span {
+      display: block;
+      width: 10%;
+      height: 100%;
+      background: #1f766d;
+      transition: width 220ms ease;
+    }
+
+    @media (max-aspect-ratio: 4 / 3) {
+      .stage { padding: 14px; }
+      .slide-frame {
+        width: 100%;
+        max-height: calc(100vh - 84px);
+        box-shadow: 0 18px 54px rgba(23, 32, 42, 0.22);
+      }
+    }
+
+    @media (display-mode: fullscreen) {
+      .stage { padding: 0; }
+      .slide-frame {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .controls { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" aria-live="polite">
+    <section class="slide-frame" id="slideFrame" aria-label="Vibe Coding slide deck">
+      <img class="slide active" src="assets/slide-01.png" alt="Slide 01" decoding="async" />
+      <img class="slide" src="assets/slide-02.png" alt="Slide 02" decoding="async" />
+      <img class="slide" src="assets/slide-03.png" alt="Slide 03" decoding="async" />
+      <img class="slide" src="assets/slide-04.png" alt="Slide 04" decoding="async" />
+      <img class="slide" src="assets/slide-05.png" alt="Slide 05" decoding="async" />
+      <img class="slide" src="assets/slide-06.png" alt="Slide 06" decoding="async" />
+      <img class="slide" src="assets/slide-07.png" alt="Slide 07" decoding="async" />
+      <img class="slide" src="assets/slide-08.png" alt="Slide 08" decoding="async" />
+      <img class="slide" src="assets/slide-09.png" alt="Slide 09" decoding="async" />
+      <img class="slide" src="assets/slide-10.png" alt="Slide 10" decoding="async" />
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="Slide controls">
+    <button type="button" id="prev" aria-label="Previous slide">‹</button>
+    <div class="counter" id="counter">01 / 10</div>
+    <button type="button" id="next" aria-label="Next slide">›</button>
+    <button type="button" id="full" aria-label="Fullscreen">⛶</button>
+  </nav>
+  <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const counter = document.querySelector("#counter");
+    const progress = document.querySelector("#progress");
+    const frame = document.querySelector("#slideFrame");
+    const total = slides.length;
+    let index = getInitialIndex();
+    let touchStartX = 0;
+    let idleTimer = 0;
+
+    function getInitialIndex() {
+      const hash = Number(window.location.hash.replace("#", ""));
+      return Number.isInteger(hash) && hash >= 1 && hash <= total ? hash - 1 : 0;
+    }
+
+    function show(nextIndex) {
+      index = Math.max(0, Math.min(total - 1, nextIndex));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+      counter.textContent = `${String(index + 1).padStart(2, "0")} / ${total}`;
+      progress.style.width = `${((index + 1) / total) * 100}%`;
+      const next = slides[index + 1];
+      if (next && !next.dataset.preloaded) {
+        const image = new Image();
+        image.src = next.src;
+        next.dataset.preloaded = "true";
+      }
+      history.replaceState(null, "", `#${index + 1}`);
+      wakeControls();
+    }
+
+    function next() { show(index + 1); }
+    function prev() { show(index - 1); }
+
+    function wakeControls() {
+      document.body.classList.remove("idle");
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => document.body.classList.add("idle"), 1800);
+    }
+
+    document.querySelector("#next").addEventListener("click", next);
+    document.querySelector("#prev").addEventListener("click", prev);
+    document.querySelector("#full").addEventListener("click", () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        document.documentElement.requestFullscreen?.();
+      }
+      wakeControls();
+    });
+
+    frame.addEventListener("click", (event) => {
+      const midpoint = window.innerWidth / 2;
+      event.clientX > midpoint ? next() : prev();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === " " || event.key === "PageDown") next();
+      if (event.key === "ArrowLeft" || event.key === "PageUp") prev();
+      if (event.key >= "1" && event.key <= "9") show(Number(event.key) - 1);
+      if (event.key === "0") show(9);
+      if (event.key.toLowerCase() === "f") document.querySelector("#full").click();
+    });
+
+    window.addEventListener("touchstart", (event) => {
+      touchStartX = event.touches[0].clientX;
+      wakeControls();
+    }, { passive: true });
+
+    window.addEventListener("touchend", (event) => {
+      const delta = event.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(delta) > 48) delta < 0 ? next() : prev();
+    }, { passive: true });
+
+    window.addEventListener("mousemove", wakeControls);
+    window.addEventListener("hashchange", () => show(getInitialIndex()));
+
+    show(index);
+  </script>
+</body>
+</html>
