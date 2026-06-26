@@ -9,6 +9,8 @@
     :root {
       --bg: #d8d2c4;
       --ink: #17202a;
+      --accent: #1f766d;
+      --accent-faint: rgba(31, 118, 109, 0.16);
       --panel: rgba(255, 255, 255, 0.72);
       --line: rgba(23, 32, 42, 0.16);
       --shadow: 0 30px 90px rgba(23, 32, 42, 0.26);
@@ -31,8 +33,10 @@
       display: grid;
       place-items: center;
       background:
-        radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.58), transparent 28%),
+        linear-gradient(118deg, rgba(255, 255, 255, 0.58), transparent 34%, var(--accent-faint) 72%, transparent 100%),
         linear-gradient(135deg, #d8d2c4 0%, #ece8dc 58%, #c9d8d3 100%);
+      background-size: 160% 160%, 100% 100%;
+      animation: calmBackground 18s ease-in-out infinite alternate;
     }
 
     .stage {
@@ -44,6 +48,19 @@
       padding: clamp(10px, 2.6vmin, 34px);
     }
 
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 38%, rgba(23, 32, 42, 0.05));
+      opacity: 0.58;
+      pointer-events: none;
+      transform: translate3d(-3%, 0, 0);
+      animation: ambientWash 22s ease-in-out infinite alternate;
+    }
+
     .slide-frame {
       position: relative;
       width: min(100%, calc((100vh - clamp(20px, 5.2vmin, 68px)) * 16 / 9));
@@ -52,6 +69,36 @@
       overflow: hidden;
       background: #f7f5ef;
       box-shadow: var(--shadow);
+      transform-origin: center;
+      animation: frameArrive 720ms cubic-bezier(0.18, 0.9, 0.2, 1) both;
+    }
+
+    .slide-frame::before,
+    .slide-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .slide-frame::before {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 30%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent 22%, transparent 76%, rgba(23, 32, 42, 0.06));
+      opacity: 0.62;
+      mix-blend-mode: screen;
+    }
+
+    .slide-frame::after {
+      width: 38%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+      transform: translate3d(-130%, 0, 0) skewX(-12deg);
+      opacity: 0;
+    }
+
+    .slide-frame.is-animating::after {
+      animation: lightSweep 880ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
 
     .slide {
@@ -61,15 +108,30 @@
       height: 100%;
       object-fit: contain;
       opacity: 0;
-      transform: scale(1.012);
-      transition: opacity 260ms ease, transform 420ms ease;
+      transform: translate3d(12px, 10px, 0) scale(0.992);
+      filter: blur(4px);
+      clip-path: inset(0 4.5% 0 0);
       pointer-events: none;
+      will-change: opacity, transform, filter, clip-path;
     }
 
     .slide.active {
-      opacity: 1;
-      transform: scale(1);
+      z-index: 3;
+      animation: slideEnter 820ms cubic-bezier(0.18, 0.9, 0.2, 1) both;
       pointer-events: auto;
+    }
+
+    body[data-direction="back"] .slide.active {
+      animation-name: slideEnterBack;
+    }
+
+    .slide.leaving {
+      z-index: 2;
+      animation: slideLeave 380ms ease both;
+    }
+
+    body[data-direction="back"] .slide.leaving {
+      animation-name: slideLeaveBack;
     }
 
     .controls {
@@ -108,6 +170,7 @@
       cursor: pointer;
       display: grid;
       place-items: center;
+      transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
     button:hover,
@@ -115,6 +178,7 @@
       outline: none;
       background: #ffffff;
       box-shadow: inset 0 0 0 1px rgba(23, 32, 42, 0.12);
+      transform: translateY(-1px);
     }
 
     .counter {
@@ -140,8 +204,109 @@
       display: block;
       width: 10%;
       height: 100%;
-      background: #1f766d;
-      transition: width 220ms ease;
+      background: var(--accent);
+      transition: width 520ms cubic-bezier(0.18, 0.9, 0.2, 1), background 520ms ease;
+    }
+
+    @keyframes calmBackground {
+      from { background-position: 0% 48%, center; }
+      to { background-position: 100% 52%, center; }
+    }
+
+    @keyframes ambientWash {
+      from { opacity: 0.46; transform: translate3d(-4%, 0, 0); }
+      to { opacity: 0.68; transform: translate3d(4%, 0, 0); }
+    }
+
+    @keyframes frameArrive {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0) scale(0.992);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+    }
+
+    @keyframes slideEnter {
+      0% {
+        opacity: 0;
+        transform: translate3d(18px, 12px, 0) scale(0.988);
+        filter: blur(5px);
+        clip-path: inset(0 7% 0 0);
+      }
+      54% {
+        opacity: 1;
+        filter: blur(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+        clip-path: inset(0 0 0 0);
+      }
+    }
+
+    @keyframes slideEnterBack {
+      0% {
+        opacity: 0;
+        transform: translate3d(-18px, 12px, 0) scale(0.988);
+        filter: blur(5px);
+        clip-path: inset(0 0 0 7%);
+      }
+      54% {
+        opacity: 1;
+        filter: blur(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+        clip-path: inset(0 0 0 0);
+      }
+    }
+
+    @keyframes slideLeave {
+      from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+        clip-path: inset(0 0 0 0);
+      }
+      to {
+        opacity: 0;
+        transform: translate3d(-10px, -2px, 0) scale(1.006);
+        filter: blur(1px);
+        clip-path: inset(0 0 0 2%);
+      }
+    }
+
+    @keyframes slideLeaveBack {
+      from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+        clip-path: inset(0 0 0 0);
+      }
+      to {
+        opacity: 0;
+        transform: translate3d(10px, -2px, 0) scale(1.006);
+        filter: blur(1px);
+        clip-path: inset(0 2% 0 0);
+      }
+    }
+
+    @keyframes lightSweep {
+      0% {
+        opacity: 0;
+        transform: translate3d(-130%, 0, 0) skewX(-12deg);
+      }
+      22% { opacity: 0.62; }
+      100% {
+        opacity: 0;
+        transform: translate3d(360%, 0, 0) skewX(-12deg);
+      }
     }
 
     @media (max-aspect-ratio: 4 / 3) {
@@ -162,6 +327,33 @@
         box-shadow: none;
       }
       .controls { opacity: 0; }
+    }
+
+    :fullscreen .stage { padding: 0; }
+
+    :fullscreen .slide-frame {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    :fullscreen .controls { opacity: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+      }
+
+      .slide {
+        filter: none;
+        clip-path: inset(0 0 0 0);
+      }
     }
   </style>
 </head>
@@ -195,9 +387,22 @@
     const progress = document.querySelector("#progress");
     const frame = document.querySelector("#slideFrame");
     const total = slides.length;
+    const accents = [
+      ["#1f766d", "rgba(31, 118, 109, 0.16)"],
+      ["#1f766d", "rgba(31, 118, 109, 0.16)"],
+      ["#c7614f", "rgba(199, 97, 79, 0.14)"],
+      ["#c7614f", "rgba(199, 97, 79, 0.14)"],
+      ["#325f8d", "rgba(50, 95, 141, 0.14)"],
+      ["#325f8d", "rgba(50, 95, 141, 0.14)"],
+      ["#1f766d", "rgba(31, 118, 109, 0.15)"],
+      ["#1f766d", "rgba(31, 118, 109, 0.15)"],
+      ["#c7614f", "rgba(199, 97, 79, 0.13)"],
+      ["#17202a", "rgba(23, 32, 42, 0.12)"],
+    ];
     let index = getInitialIndex();
     let touchStartX = 0;
     let idleTimer = 0;
+    let sweepTimer = 0;
 
     function getInitialIndex() {
       const hash = Number(window.location.hash.replace("#", ""));
@@ -205,17 +410,34 @@
     }
 
     function show(nextIndex) {
+      const previousIndex = index;
       index = Math.max(0, Math.min(total - 1, nextIndex));
-      slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+      const direction = index < previousIndex ? "back" : "forward";
+      document.body.dataset.direction = direction;
+      slides.forEach((slide, i) => {
+        if (i !== index && slide.classList.contains("active")) {
+          slide.classList.add("leaving");
+          window.setTimeout(() => slide.classList.remove("leaving"), 430);
+        }
+        slide.classList.toggle("active", i === index);
+      });
+      const [accent, accentFaint] = accents[index] || accents[0];
+      document.documentElement.style.setProperty("--accent", accent);
+      document.documentElement.style.setProperty("--accent-faint", accentFaint);
       counter.textContent = `${String(index + 1).padStart(2, "0")} / ${total}`;
       progress.style.width = `${((index + 1) / total) * 100}%`;
-      const next = slides[index + 1];
-      if (next && !next.dataset.preloaded) {
+      [slides[index + 1], slides[index - 1]].forEach((next) => {
+        if (!next || next.dataset.preloaded) return;
         const image = new Image();
         image.src = next.src;
         next.dataset.preloaded = "true";
-      }
+      });
       history.replaceState(null, "", `#${index + 1}`);
+      frame.classList.remove("is-animating");
+      void frame.offsetWidth;
+      frame.classList.add("is-animating");
+      clearTimeout(sweepTimer);
+      sweepTimer = setTimeout(() => frame.classList.remove("is-animating"), 920);
       wakeControls();
     }
 
