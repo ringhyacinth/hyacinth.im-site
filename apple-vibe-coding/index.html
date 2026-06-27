@@ -134,6 +134,50 @@
       animation-name: slideLeaveBack;
     }
 
+    body.gsap-ready .slide.active,
+    body.gsap-ready .slide.leaving {
+      animation: none;
+    }
+
+    .project-link {
+      position: absolute;
+      left: clamp(22px, 3.2%, 46px);
+      bottom: clamp(22px, 3.2%, 46px);
+      z-index: 8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 172px;
+      min-height: 48px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(23, 32, 42, 0.16);
+      box-shadow: 0 16px 36px rgba(23, 32, 42, 0.14);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: clamp(14px, 1.38vw, 20px);
+      font-weight: 800;
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      transform: translate3d(0, 8px, 0);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease, background 180ms ease;
+    }
+
+    .project-link.visible {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+      pointer-events: auto;
+    }
+
+    .project-link:hover,
+    .project-link:focus-visible {
+      outline: none;
+      background: #ffffff;
+      transform: translate3d(0, -1px, 0);
+    }
+
     .controls {
       position: fixed;
       left: 50%;
@@ -354,6 +398,10 @@
         filter: none;
         clip-path: inset(0 0 0 0);
       }
+
+      .project-link {
+        transition-duration: 1ms !important;
+      }
     }
   </style>
 </head>
@@ -370,6 +418,7 @@
       <img class="slide" src="assets/slide-08.png" alt="Slide 08" decoding="async" />
       <img class="slide" src="assets/slide-09.png" alt="Slide 09" decoding="async" />
       <img class="slide" src="assets/slide-10.png" alt="Slide 10" decoding="async" />
+      <a class="project-link" id="projectLink" href="#" target="_blank" rel="noopener noreferrer"></a>
     </section>
   </main>
 
@@ -381,12 +430,16 @@
   </nav>
   <div class="progress" aria-hidden="true"><span id="progress"></span></div>
 
+  <script src="vendor/gsap.min.js"></script>
   <script>
     const slides = Array.from(document.querySelectorAll(".slide"));
     const counter = document.querySelector("#counter");
     const progress = document.querySelector("#progress");
     const frame = document.querySelector("#slideFrame");
+    const projectLink = document.querySelector("#projectLink");
     const total = slides.length;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const canUseGsap = Boolean(window.gsap) && !prefersReducedMotion;
     const accents = [
       ["#1f766d", "rgba(31, 118, 109, 0.16)"],
       ["#1f766d", "rgba(31, 118, 109, 0.16)"],
@@ -399,10 +452,33 @@
       ["#c7614f", "rgba(199, 97, 79, 0.13)"],
       ["#17202a", "rgba(23, 32, 42, 0.12)"],
     ];
+    const projectLinks = {
+      2: {
+        label: "打开音乐练习台 ↗",
+        url: "https://ringhyacinth.github.io/c/",
+      },
+      4: {
+        label: "打开 3D 主页 ↗",
+        url: "https://ringhyacinth.github.io/hyacinth.im-site/",
+      },
+    };
     let index = getInitialIndex();
     let touchStartX = 0;
     let idleTimer = 0;
     let sweepTimer = 0;
+
+    if (canUseGsap) {
+      document.body.classList.add("gsap-ready");
+      gsap.set(slides, {
+        autoAlpha: 0,
+        x: 12,
+        y: 10,
+        scale: 0.992,
+        filter: "blur(4px)",
+        clipPath: "inset(0% 4.5% 0% 0%)",
+      });
+      gsap.set(projectLink, { autoAlpha: 0, y: 8 });
+    }
 
     function getInitialIndex() {
       const hash = Number(window.location.hash.replace("#", ""));
@@ -413,6 +489,8 @@
       const previousIndex = index;
       index = Math.max(0, Math.min(total - 1, nextIndex));
       const direction = index < previousIndex ? "back" : "forward";
+      const previousSlide = slides[previousIndex];
+      const activeSlide = slides[index];
       document.body.dataset.direction = direction;
       slides.forEach((slide, i) => {
         if (i !== index && slide.classList.contains("active")) {
@@ -425,7 +503,17 @@
       document.documentElement.style.setProperty("--accent", accent);
       document.documentElement.style.setProperty("--accent-faint", accentFaint);
       counter.textContent = `${String(index + 1).padStart(2, "0")} / ${total}`;
-      progress.style.width = `${((index + 1) / total) * 100}%`;
+      const progressWidth = `${((index + 1) / total) * 100}%`;
+      if (canUseGsap) {
+        gsap.to(progress, {
+          width: progressWidth,
+          backgroundColor: accent,
+          duration: 0.52,
+          ease: "power3.out",
+        });
+      } else {
+        progress.style.width = progressWidth;
+      }
       [slides[index + 1], slides[index - 1]].forEach((next) => {
         if (!next || next.dataset.preloaded) return;
         const image = new Image();
@@ -438,11 +526,69 @@
       frame.classList.add("is-animating");
       clearTimeout(sweepTimer);
       sweepTimer = setTimeout(() => frame.classList.remove("is-animating"), 920);
+      animateSlide(previousSlide, activeSlide, direction);
+      updateProjectLink();
       wakeControls();
     }
 
     function next() { show(index + 1); }
     function prev() { show(index - 1); }
+
+    function animateSlide(previousSlide, activeSlide, direction) {
+      if (!canUseGsap) return;
+      const isBack = direction === "back";
+      if (previousSlide && previousSlide !== activeSlide) {
+        gsap.killTweensOf(previousSlide);
+        gsap.to(previousSlide, {
+          autoAlpha: 0,
+          x: isBack ? 10 : -10,
+          y: -2,
+          scale: 1.006,
+          filter: "blur(1px)",
+          clipPath: isBack ? "inset(0% 2% 0% 0%)" : "inset(0% 0% 0% 2%)",
+          duration: 0.36,
+          ease: "power2.out",
+        });
+      }
+
+      gsap.killTweensOf(activeSlide);
+      gsap.fromTo(activeSlide, {
+        autoAlpha: 0,
+        x: isBack ? -18 : 18,
+        y: 12,
+        scale: 0.988,
+        filter: "blur(5px)",
+        clipPath: isBack ? "inset(0% 0% 0% 7%)" : "inset(0% 7% 0% 0%)",
+      }, {
+        autoAlpha: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        filter: "blur(0px)",
+        clipPath: "inset(0% 0% 0% 0%)",
+        duration: 0.82,
+        ease: "power3.out",
+      });
+
+      gsap.fromTo(frame, { scale: 0.997 }, { scale: 1, duration: 0.72, ease: "power3.out" });
+    }
+
+    function updateProjectLink() {
+      const item = projectLinks[index];
+      if (!item) {
+        projectLink.classList.remove("visible");
+        projectLink.removeAttribute("href");
+        if (canUseGsap) gsap.to(projectLink, { autoAlpha: 0, y: 8, duration: 0.18, ease: "power2.out" });
+        return;
+      }
+
+      projectLink.href = item.url;
+      projectLink.textContent = item.label;
+      projectLink.classList.add("visible");
+      if (canUseGsap) {
+        gsap.fromTo(projectLink, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, delay: 0.28, duration: 0.34, ease: "power2.out" });
+      }
+    }
 
     function wakeControls() {
       document.body.classList.remove("idle");
@@ -462,8 +608,13 @@
     });
 
     frame.addEventListener("click", (event) => {
+      if (event.target.closest("#projectLink")) return;
       const midpoint = window.innerWidth / 2;
       event.clientX > midpoint ? next() : prev();
+    });
+
+    projectLink.addEventListener("click", (event) => {
+      event.stopPropagation();
     });
 
     window.addEventListener("keydown", (event) => {
@@ -471,6 +622,7 @@
       if (event.key === "ArrowLeft" || event.key === "PageUp") prev();
       if (event.key >= "1" && event.key <= "9") show(Number(event.key) - 1);
       if (event.key === "0") show(9);
+      if (event.key.toLowerCase() === "o" && projectLinks[index]) window.open(projectLinks[index].url, "_blank", "noopener,noreferrer");
       if (event.key.toLowerCase() === "f") document.querySelector("#full").click();
     });
 
