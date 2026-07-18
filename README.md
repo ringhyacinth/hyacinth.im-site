@@ -88,6 +88,9 @@ Included works:
 - When Masterpieces Audition
 - Super Sketch Show 2026 National Tour
 - MAP x Morandi Exhibition Trailer
+- MAP 5th Anniversary Film
+- Semir SHAMA Fantasy Film
+- The Orange Cat’s Dragon Boat Festival
 
 ## Video Strategy
 
@@ -97,7 +100,7 @@ The original local videos are much larger than a static site should ship directl
 - H.264 video
 - AAC audio
 - MP4 `faststart`
-- Around 139 MB total for 11 playable videos
+- Around 174 MB total for 14 playable videos
 
 This repository includes only the web playback versions under:
 
