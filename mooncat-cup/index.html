@@ -125,6 +125,12 @@
   .score { font-size:15px; margin-bottom:8px; opacity:.9; }
   #rotate { display:none; }
   .sheet { touch-action: pan-y; }
+  /* Keep controls and HUD clear of notches and the home indicator. */
+  #hud .tl, #minimap, #tLeft { margin-left: env(safe-area-inset-left, 0px); }
+  #tLeft + #tRight { margin-left: env(safe-area-inset-left, 0px); }
+  #hud .tr, #hud .br, #tDrift, #tItem { margin-right: env(safe-area-inset-right, 0px); }
+  .tbtn { margin-bottom: env(safe-area-inset-bottom, 0px); }
+  @media (max-height: 360px) { #title .how { display: none; } #title .logo .sub { display: none; } }
   @media (max-height: 520px) {
     #title .logo h1 { font-size: clamp(38px, 13vh, 80px); }
     #title .logo .sub { margin-top: 4px; font-size: 13px; }
@@ -184,7 +190,7 @@
   <div class="tl"><div class="lap kart" id="lap">圈 1<small>/3</small></div><div class="time outline" id="time">0:00.00</div></div>
   <div class="item" id="itemSlot"><img id="itemImg" alt=""><span class="count kart" id="itemCount"></span></div>
   <div class="item-name outline" id="itemName"></div>
-  <div class="tr"><button class="round" id="muteBtn" title="声音">♪</button><button class="round" id="pauseBtn" title="暂停">Ⅱ</button></div>
+  <div class="tr"><button class="round" id="muteBtn" title="声音" tabindex="-1">♪</button><button class="round" id="pauseBtn" title="暂停" tabindex="-1">Ⅱ</button></div>
   <canvas id="minimap" width="460" height="400"></canvas>
   <div class="br">
     <div class="place kart" id="place">6<sup>名</sup></div>
