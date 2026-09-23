@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#140b2e">
+<link rel="icon" href="data:,">
+<title>橘猫月光杯 · 上海中秋大奖赛</title>
+<meta name="description" content="橘猫在中秋夜的上海赛跑吃月饼：外滩、南京路、武康路、豫园九曲桥、南浦大桥、陆家嘴和外滩观光隧道。漂移、道具、三圈竞速。">
+<meta property="og:title" content="橘猫月光杯 · 上海中秋大奖赛">
+<meta property="og:description" content="外滩起跑，飞越黄浦江，穿过陆家嘴。漂移、道具、三圈竞速吃月饼。">
+<meta property="og:image" content="https://ringhyacinth.github.io/hyacinth.im-site/mooncat-cup/cover.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --gold:#ffd84f; --gold2:#ff9d1c; --red:#e8363c; --navy:#140b2e; --ink:#1b0f3a; --pink:#ff6fd8; --cyan:#7ff7ff; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#07040f; color:#fff; font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC","Helvetica Neue",sans-serif; user-select:none; -webkit-user-select:none; touch-action:none; }
+  #world, #world canvas { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .layer { position:fixed; inset:0; pointer-events:none; }
+  .hidden { display:none !important; }
+  .panel { pointer-events:auto; }
+  .outline { -webkit-text-stroke: 0; text-shadow: 0 3px 0 #2a0f45, 3px 0 0 #2a0f45, -3px 0 0 #2a0f45, 0 -3px 0 #2a0f45, 2px 2px 0 #2a0f45, -2px 2px 0 #2a0f45, 2px -2px 0 #2a0f45, -2px -2px 0 #2a0f45, 0 6px 12px rgba(0,0,0,.45); }
+  .kart { font-weight:900; font-style:italic; letter-spacing:.02em; background:linear-gradient(180deg,#fff7c2 0%,var(--gold) 45%,var(--gold2) 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter: drop-shadow(0 3px 0 #2a0f45) drop-shadow(3px 0 0 #2a0f45) drop-shadow(-3px 0 0 #2a0f45) drop-shadow(0 -3px 0 #2a0f45) drop-shadow(0 8px 10px rgba(0,0,0,.5)); }
+  button { font:inherit; cursor:pointer; }
+
+  /* Loading */
+  #loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; background:radial-gradient(circle at 50% 40%, #2b1a5c, #07040f 70%); pointer-events:auto; z-index:50; }
+  #loading .moon { width:92px; height:92px; border-radius:50%; background:radial-gradient(circle at 38% 36%, #fffbe8, #ffe39a 55%, #f0b44c); box-shadow:0 0 60px #ffd36b88; animation: pulse 1.6s ease-in-out infinite; }
+  #loading .bar { width:min(360px,70vw); height:12px; border-radius:6px; background:#ffffff1f; overflow:hidden; }
+  #loading .bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--pink),var(--gold)); transition:width .2s; }
+  @keyframes pulse { 50% { transform:scale(1.06); box-shadow:0 0 90px #ffd36bcc; } }
+
+  /* Title */
+  #title { display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding: max(3vh,18px) 16px max(4vh,20px); background:linear-gradient(180deg, rgba(10,4,30,.55) 0%, rgba(10,4,30,0) 38%, rgba(10,4,30,0) 55%, rgba(10,4,30,.8) 100%); z-index:20; }
+  #title .logo { text-align:center; margin-top:1vh; }
+  #title .logo .small { font-size:clamp(14px,2.2vw,22px); font-weight:800; letter-spacing:.4em; color:#ffe9a8; text-shadow:0 2px 8px #000; }
+  #title .logo h1 { margin:4px 0 0; font-size:clamp(46px,9vw,112px); line-height:1.02; }
+  #title .logo .sub { margin-top:10px; font-size:clamp(14px,2vw,20px); font-weight:800; color:#fff; }
+  #title .menu { display:flex; flex-direction:column; align-items:center; gap:14px; pointer-events:auto; }
+  .cups { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .cup { border:0; min-width:150px; padding:12px 18px 10px; border-radius:18px; background:linear-gradient(180deg,#3a2376,#1d1045); color:#fff; box-shadow: inset 0 0 0 3px #ffffff22, 0 6px 0 #0b0520; transition: transform .12s; text-align:center; }
+  .cup b { display:block; font-size:22px; font-weight:900; }
+  .cup span { display:block; font-size:12px; opacity:.8; margin-top:2px; }
+  .cup.sel { background:linear-gradient(180deg,#ffcf3a,#ff8a1c); color:#2a0f45; box-shadow: inset 0 0 0 3px #fff7, 0 6px 0 #8a3a00, 0 0 30px #ffb03a88; transform: translateY(-3px); }
+  .big-btn { border:0; padding:16px 54px; font-size:clamp(22px,3.2vw,30px); font-weight:900; border-radius:999px; color:#2a0f45; background:linear-gradient(180deg,#fff3a6,#ffd84f 40%,#ff9d1c); box-shadow: 0 7px 0 #8a3a00, 0 0 40px #ffb03a88, inset 0 0 0 3px #fff8; animation: bob 1.6s ease-in-out infinite; }
+  .big-btn:active { transform: translateY(4px); box-shadow:0 3px 0 #8a3a00; }
+  @keyframes bob { 50% { transform: translateY(-4px) scale(1.02); } }
+  .how { font-size:13px; opacity:.85; text-align:center; line-height:1.7; max-width:680px; }
+  .how kbd { display:inline-block; padding:0 6px; border-radius:5px; background:#ffffff22; border:1px solid #ffffff44; font-family:inherit; font-size:12px; }
+  .link-btn { background:none; border:0; color:#ffe9a8; text-decoration:underline; font-size:13px; }
+
+  /* Intro */
+  #intro .card { position:absolute; left: max(16px,3vw); top: max(16px,3vh); padding:14px 18px 12px; border-radius:18px; background:linear-gradient(135deg,#c8102eee,#7a0c3a) ; box-shadow:0 10px 30px #0008, inset 0 0 0 3px #ffd84f; transform-origin:left top; animation: slideIn .6s cubic-bezier(.2,1.4,.4,1); }
+  #intro .card .cupname { font-size:13px; font-weight:800; color:#ffe9a8; letter-spacing:.2em; }
+  #intro .card .course { font-size:clamp(22px,3.4vw,34px); font-weight:900; }
+  #intro .card canvas { display:block; margin-top:8px; width:min(240px,40vw); height:auto; }
+  #intro .caption { position:absolute; left:50%; bottom:12vh; transform:translateX(-50%); font-size:clamp(26px,4.6vw,52px); white-space:nowrap; }
+  #intro .caption small { display:block; text-align:center; font-size:.42em; font-style:normal; letter-spacing:.3em; color:#fff; -webkit-text-fill-color:#fff; }
+  #intro .skip { position:absolute; right:18px; bottom:18px; font-size:13px; opacity:.8; }
+  @keyframes slideIn { from { transform: translateX(-120%) rotate(-6deg); } }
+
+  /* HUD */
+  #hud .tl { position:absolute; left:max(12px,2vw); top:max(10px,1.6vh); }
+  #hud .lap { font-size:clamp(26px,4vw,42px); line-height:1; }
+  #hud .lap small { font-size:.55em; }
+  #hud .time { margin-top:4px; font-size:clamp(14px,1.8vw,19px); font-weight:800; font-variant-numeric:tabular-nums; }
+  #hud .item { position:absolute; left:50%; top:max(10px,1.4vh); transform:translateX(-50%); width:clamp(74px,9vw,96px); aspect-ratio:1; border-radius:22px; background:radial-gradient(circle,#ffffff30,#ffffff10); box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 8px #ff6fd8, 0 4px 16px #0008; display:flex; align-items:center; justify-content:center; }
+  #hud .item img { width:78%; height:78%; object-fit:contain; image-rendering:auto; }
+  #hud .item .count { position:absolute; right:6px; bottom:2px; font-size:20px; }
+  #hud .item.rolling { animation: shake .12s linear infinite; }
+  #hud .item-name { position:absolute; left:50%; top:calc(max(10px,1.4vh) + clamp(80px,9.6vw,102px)); transform:translateX(-50%); font-size:13px; font-weight:800; white-space:nowrap; }
+  @keyframes shake { 50% { transform:translateX(-50%) rotate(4deg); } }
+  #hud .tr { position:absolute; right:max(12px,2vw); top:max(10px,1.6vh); display:flex; gap:8px; pointer-events:auto; }
+  .round { width:44px; height:44px; border-radius:50%; border:0; background:#1b0f3acc; color:#fff; font-size:18px; font-weight:900; box-shadow: inset 0 0 0 2px #ffffff55; }
+  #minimap { position:absolute; left:max(10px,1.5vw); bottom:max(10px,1.5vh); width:clamp(150px,19vw,230px); height:auto; filter: drop-shadow(0 4px 10px #000a); }
+  #hud .br { position:absolute; right:max(14px,2vw); bottom:max(12px,2vh); text-align:right; }
+  #hud .place { font-size:clamp(66px,10vw,116px); line-height:.9; }
+  #hud .place sup { font-size:.36em; vertical-align: top; margin-left:2px; }
+  #hud .cakes { display:inline-flex; align-items:center; gap:6px; margin-top:4px; padding:4px 12px 4px 6px; border-radius:999px; background:#1b0f3acc; font-weight:900; font-size:20px; }
+  #hud .cakes i { width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 40% 35%, #ffd88a, #e0a24c 60%, #8f5220); box-shadow: inset 0 0 0 3px #8a4b1c55; }
+  #hud .moonbar { display:flex; align-items:center; gap:8px; justify-content:flex-end; margin-top:6px; font-size:13px; font-weight:800; }
+  #hud .moonbar canvas { width:34px; height:34px; }
+  #center { position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); text-align:center; white-space:nowrap; font-size:clamp(46px,9vw,120px); }
+  #center.pop { animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  #center small { display:block; font-size:.32em; }
+  @keyframes pop { from { transform:translate(-50%,-50%) scale(.3); opacity:0; } }
+  #sub { position:absolute; left:50%; top:52%; transform:translateX(-50%); font-size:clamp(18px,2.6vw,28px); white-space:nowrap; }
+  #toast { position:absolute; left:50%; bottom:max(16px,3vh); transform:translateX(-50%); display:flex; flex-direction:column-reverse; gap:6px; align-items:center; }
+  #toast div { padding:6px 14px; border-radius:999px; background:#1b0f3acc; font-size:14px; font-weight:800; animation: fadeUp 2.6s forwards; white-space:nowrap; }
+  @keyframes fadeUp { 0% { opacity:0; transform:translateY(8px);} 10%,80% { opacity:1; transform:none; } 100% { opacity:0; } }
+  #zoneTag { position:absolute; left:50%; top:22%; transform:translateX(-50%); text-align:center; font-weight:900; opacity:0; transition:opacity .4s; }
+  #zoneTag.show { opacity:1; }
+  #zoneTag b { display:block; font-size:clamp(26px,4vw,40px); }
+  #zoneTag span { font-size:14px; letter-spacing:.3em; }
+  #flash { position:fixed; inset:0; pointer-events:none; background:#fff; opacity:0; }
+
+  /* Touch controls */
+  #touch { position:fixed; inset:auto 0 0 0; height:40vh; display:none; pointer-events:none; }
+  .touch-on.racing #touch { display:block; }
+  .tbtn { position:absolute; bottom:max(16px,3vh); width:clamp(72px,17vw,108px); height:clamp(72px,17vw,108px); border-radius:50%; border:0; background:#ffffff26; box-shadow: inset 0 0 0 3px #ffffff66; color:#fff; font-weight:900; font-size:clamp(16px,3.4vw,22px); pointer-events:auto; backdrop-filter: blur(2px); }
+  .tbtn.on { background:#ffd84f88; }
+  #tLeft { left:max(12px,3vw); } #tRight { left:calc(max(12px,3vw) + clamp(80px,19vw,120px)); }
+  #tDrift { right:max(12px,3vw); width:clamp(84px,20vw,126px); height:clamp(84px,20vw,126px); }
+  #tItem { right:calc(max(12px,3vw) + clamp(92px,22vw,136px)); bottom:calc(max(16px,3vh) + 30px); width:clamp(62px,14vw,86px); height:clamp(62px,14vw,86px); }
+  .touch-on #minimap { bottom: calc(max(16px,3vh) + clamp(80px,19vw,118px)); width:clamp(120px,26vw,180px); }
+  .touch-on #hud .br { bottom: calc(max(16px,3vh) + clamp(90px,21vw,130px)); }
+
+  /* Pause / results */
+  .modal { display:flex; align-items:center; justify-content:center; background:rgba(8,4,20,.62); pointer-events:auto; z-index:30; backdrop-filter: blur(3px); }
+  .sheet { width:min(620px,94vw); max-height:92vh; overflow:auto; padding:22px 22px 18px; border-radius:26px; background:linear-gradient(180deg,#2b1760,#140b2e); box-shadow: inset 0 0 0 3px #ffd84f, 0 20px 60px #000c; text-align:center; }
+  .sheet h2 { margin:0 0 12px; font-size:clamp(34px,6vw,54px); }
+  .rows { display:flex; flex-direction:column; gap:6px; margin:10px 0 14px; text-align:left; }
+  .row { display:grid; grid-template-columns: 44px 1fr 90px 70px; align-items:center; gap:8px; padding:7px 12px; border-radius:14px; background:#ffffff12; font-weight:800; }
+  .row.me { background:linear-gradient(90deg,#ff9d1c,#ffcf3a); color:#2a0f45; }
+  .row .pl { font-size:22px; font-style:italic; font-weight:900; }
+  .row .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:8px; vertical-align:-1px; }
+  .row .t, .row .c { text-align:right; font-variant-numeric:tabular-nums; font-size:14px; }
+  .badges { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:14px; }
+  .badge { padding:6px 12px; border-radius:12px; background:#ffd84f22; box-shadow: inset 0 0 0 2px #ffd84f; font-size:13px; font-weight:800; }
+  .badge b { color:#ffd84f; }
+  .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .btn2 { border:0; padding:12px 26px; border-radius:999px; font-weight:900; font-size:18px; background:#ffffff1f; color:#fff; box-shadow: inset 0 0 0 2px #ffffff55; }
+  .btn2.main { background:linear-gradient(180deg,#fff3a6,#ffd84f 40%,#ff9d1c); color:#2a0f45; box-shadow:0 5px 0 #8a3a00; }
+  .score { font-size:15px; margin-bottom:8px; opacity:.9; }
+  #rotate { display:none; }
+  .sheet { touch-action: pan-y; }
+  @media (max-height: 520px) {
+    #title .logo h1 { font-size: clamp(38px, 13vh, 80px); }
+    #title .logo .sub { margin-top: 4px; font-size: 13px; }
+    .cup { min-width: 120px; padding: 8px 12px 6px; }
+    .cup b { font-size: 18px; }
+    .big-btn { padding: 10px 40px; font-size: 22px; }
+    .how { font-size: 11px; line-height: 1.5; }
+    #zoneTag { top: 30%; }
+    #zoneTag b { font-size: 24px; }
+    .sheet { padding: 12px 16px 12px; }
+    .sheet h2 { font-size: 30px; margin-bottom: 4px; }
+    .rows { gap: 3px; margin: 6px 0 8px; }
+    .row { padding: 3px 10px; font-size: 13px; }
+    .row .pl { font-size: 16px; }
+    .badges { margin-bottom: 8px; }
+    .btn2 { padding: 8px 18px; font-size: 15px; }
+    #center { font-size: clamp(40px, 16vh, 90px); }
+  }
+  @media (orientation: portrait) and (max-width: 700px) { .touch-on #rotate { display:flex; position:fixed; top:8px; left:50%; transform:translateX(-50%); padding:6px 14px; border-radius:999px; background:#1b0f3acc; font-size:12px; z-index:40; pointer-events:none; } }
+  .error { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; font-size:18px; background:#140b2e; z-index:99; }
+</style>
+</head>
+<body>
+<div id="world"></div>
+<div id="flash"></div>
+
+<div id="loading" class="layer">
+  <div class="moon"></div>
+  <div class="kart" style="font-size:28px">正在点亮上海…</div>
+  <div class="bar"><i id="loadBar"></i></div>
+  <div id="loadText" style="font-size:13px;opacity:.75">搭建外滩与陆家嘴</div>
+</div>
+
+<div id="title" class="layer hidden">
+  <div class="logo">
+    <div class="small">中秋限定 · 上海环线</div>
+    <h1 class="kart">橘猫月光杯</h1>
+    <div class="sub outline">外滩 → 南京路 → 武康路 → 豫园 → 南浦大桥 → 陆家嘴 → 观光隧道</div>
+  </div>
+  <div class="menu">
+    <div class="cups" id="cups"></div>
+    <button class="big-btn" id="startBtn">开始比赛</button>
+    <div class="how outline" id="howText">
+      <kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd> 转向　按住 <kbd>空格</kbd> / <kbd>Shift</kbd> 跳起漂移，火花变色后松开冲刺　<kbd>E</kbd> 使用道具　<kbd>P</kbd> 暂停<br>
+      吃月饼提速（最多 10 个），被击中会掉月饼。跳台起飞时再按一次空格做空中花式。倒计时 GO 的瞬间按空格：起跑火箭冲刺！
+    </div>
+  </div>
+</div>
+
+<div id="intro" class="layer hidden">
+  <div class="card"><div class="cupname" id="introCup">月饼杯</div><div class="course">上海月光环线</div><canvas id="introMap" width="480" height="360"></canvas></div>
+  <div class="caption kart" id="introCaption"></div>
+  <div class="skip outline">点击 / 任意键 跳过</div>
+</div>
+
+<div id="hud" class="layer hidden">
+  <div class="tl"><div class="lap kart" id="lap">圈 1<small>/3</small></div><div class="time outline" id="time">0:00.00</div></div>
+  <div class="item" id="itemSlot"><img id="itemImg" alt=""><span class="count kart" id="itemCount"></span></div>
+  <div class="item-name outline" id="itemName"></div>
+  <div class="tr"><button class="round" id="muteBtn" title="声音">♪</button><button class="round" id="pauseBtn" title="暂停">Ⅱ</button></div>
+  <canvas id="minimap" width="460" height="400"></canvas>
+  <div class="br">
+    <div class="place kart" id="place">6<sup>名</sup></div>
+    <div><span class="cakes"><i></i><span id="cakes">×0</span></span></div>
+    <div class="moonbar outline"><span id="moonText">月饼 0/100</span><canvas id="moonIcon" width="68" height="68"></canvas></div>
+  </div>
+  <div id="zoneTag"><b class="kart" id="zoneName"></b><span class="outline" id="zoneSub"></span></div>
+  <div id="center" class="kart"></div>
+  <div id="sub" class="outline"></div>
+  <div id="toast"></div>
+</div>
+
+<div id="touch">
+  <button class="tbtn" id="tLeft">◀</button>
+  <button class="tbtn" id="tRight">▶</button>
+  <button class="tbtn" id="tItem">道具</button>
+  <button class="tbtn" id="tDrift">跳 / 漂移</button>
+</div>
+<div id="rotate">横屏体验更好</div>
+
+<div id="pause" class="layer modal hidden">
+  <div class="sheet">
+    <h2 class="kart">暂停</h2>
+    <div class="how" style="margin-bottom:16px">转向 ← → / A D　·　漂移 按住空格或 Shift　·　道具 E　·　跳台上再按空格做花式</div>
+    <div class="btns"><button class="btn2 main" id="resumeBtn">继续</button><button class="btn2" id="restartBtn">重新开始</button><button class="btn2" id="quitBtn">返回标题</button></div>
+  </div>
+</div>
+
+<div id="results" class="layer modal hidden">
+  <div class="sheet">
+    <h2 class="kart" id="resTitle">第 1 名！</h2>
+    <div class="score outline" id="resScore"></div>
+    <div class="rows" id="resRows"></div>
+    <div class="badges" id="resBadges"></div>
+    <div class="btns"><button class="btn2 main" id="againBtn">再跑一局</button><button class="btn2" id="nextCupBtn">挑战更高杯赛</button><button class="btn2" id="titleBtn">返回标题</button></div>
+  </div>
+</div>
+
+<script src="./game.js"></script>
+</body>
+</html>
