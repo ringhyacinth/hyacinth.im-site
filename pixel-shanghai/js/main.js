@@ -1,12 +1,12 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260924";
-import * as A from "./audio.js?v=20260924";
-import { FX, pixelWipe } from "./fx.js?v=20260924";
-import { lineId } from "./voice-id.js?v=20260924";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260924b";
+import * as A from "./audio.js?v=20260924b";
+import { FX, pixelWipe } from "./fx.js?v=20260924b";
+import { lineId } from "./voice-id.js?v=20260924b";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260924";
+const V = "?v=20260924b";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -303,12 +303,14 @@ async function runSteps(steps, spot) {
 
 // 头像背景：取说话人所在位置的场景画面，缩成 20×20 马赛克并染上角色色，静止不动；只有角色精灵会跳。
 let dlgSpot = null;
-const PBG = 20;
+const PBG = 20, PBG_UP = 8;
 const portBg = el("canvas", "pbg");
-portBg.width = portBg.height = PBG;
+portBg.width = portBg.height = PBG * PBG_UP;
+const portBgSmall = el("canvas");
+portBgSmall.width = portBgSmall.height = PBG;
 const portSprite = el("img", "spr");
 function paintPortraitBg(tint) {
-  const g = portBg.getContext("2d");
+  const g = portBgSmall.getContext("2d");
   g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
   g.fillStyle = "#231d35"; g.fillRect(0, 0, PBG, PBG);
   if (still.complete && still.naturalWidth) {
@@ -322,7 +324,24 @@ function paintPortraitBg(tint) {
   g.globalCompositeOperation = "multiply"; g.globalAlpha = 0.6; g.fillStyle = tint; g.fillRect(0, 0, PBG, PBG);
   g.globalCompositeOperation = "source-over"; g.globalAlpha = 0.42; g.fillStyle = "#120f1c"; g.fillRect(0, 0, PBG, PBG);
   g.globalAlpha = 1;
+  const big = portBg.getContext("2d");
+  big.imageSmoothingEnabled = false;
+  big.drawImage(portBgSmall, 0, 0, PBG * PBG_UP, PBG * PBG_UP);
 }
+
+// 头像精灵 64×64：让每个像素格正好占整数个物理像素，边缘才锐利
+const SPRITE = 64;
+function fitSprite() {
+  const box = Math.min(dPort.clientWidth, dPort.clientHeight);
+  if (!box) return;
+  const dpr = window.devicePixelRatio || 1;
+  let k = Math.max(1, Math.round((box * dpr) / SPRITE));
+  if ((SPRITE * k) / dpr > box * 1.06 && k > 1) k--;
+  const size = (SPRITE * k) / dpr;
+  Object.assign(portSprite.style, { width: `${size}px`, height: `${size}px`, left: `${Math.round(((box - size) / 2) * dpr) / dpr}px` });
+  dPort.style.setProperty("--sp", `${k / dpr}px`);
+}
+addEventListener("resize", () => { if (dPort.contains(portSprite)) fitSprite(); });
 
 let lastPortrait = "";
 function setSpeaker(who) {
@@ -341,6 +360,7 @@ function setSpeaker(who) {
     if (!still.naturalWidth) lastPortrait = "";
     portSprite.src = `assets/portrait/${sp.portrait}.png${V}`; portSprite.alt = sp.name;
     dPort.append(portBg, portSprite);
+    fitSprite();
   }
   else { waveColor = sp.wave; dPort.appendChild(waveCanvas); }
   return sp;
@@ -843,7 +863,7 @@ async function makePostcard() {
   g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.textAlign = "right"; g.fillText(`—— ${SPEAKERS[pick.who].name}`, W - 90, y);
   // 小满
   const me = await loadImg(`assets/portrait/xiaoman.png${V}`);
-  if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 64, H - 330, 240, 240); }
+  if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 60, H - 346, 256, 256); }
   g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText("像素上海：弄堂电台", 330, H - 210);
   g.fillStyle = "#8a5a3c"; g.font = "26px Px, sans-serif";
   g.fillText("一台老收音机，一天，五十二段上海闲话", 330, H - 160);
