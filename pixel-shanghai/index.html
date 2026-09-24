@@ -11,9 +11,9 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0d0b18">
-<link rel="icon" href="assets/item/radio.webp">
+<link rel="icon" href="assets/item/radio.png">
 <link rel="preload" href="assets/font/fusion-pixel-zh.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=20260923">
+<link rel="stylesheet" href="css/style.css?v=20260924">
 </head>
 <body>
 <div id="app">
@@ -101,6 +101,7 @@
     <div class="p-win small">
       <div class="p-head"><h2>设置</h2><button class="x" aria-label="关闭">✕</button></div>
       <div class="p-body set">
+        <label>配音<input id="vol-voice" type="range" min="0" max="1" step="0.05"></label>
         <label>音乐<input id="vol-music" type="range" min="0" max="1" step="0.05"></label>
         <label>音效<input id="vol-sfx" type="range" min="0" max="1" step="0.05"></label>
         <div class="keys">
@@ -137,6 +138,6 @@
   </div>
 </div>
 <noscript>这个小游戏需要开启 JavaScript。</noscript>
-<script type="module" src="js/main.js?v=20260923"></script>
+<script type="module" src="js/main.js?v=20260924"></script>
 </body>
 </html>

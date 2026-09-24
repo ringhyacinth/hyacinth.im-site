@@ -1,11 +1,24 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260923";
-import * as A from "./audio.js?v=20260923";
-import { FX, pixelWipe } from "./fx.js?v=20260923";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260924";
+import * as A from "./audio.js?v=20260924";
+import { FX, pixelWipe } from "./fx.js?v=20260924";
+import { lineId } from "./voice-id.js?v=20260924";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260923";
+const V = "?v=20260924";
+
+// 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
+let VOICE = {};
+fetch(`assets/voice/index.json${V}`).then((r) => (r.ok ? r.json() : {})).then((j) => { VOICE = j || {}; }).catch(() => {});
+const RADIO_VOICES = new Set(["signal", "booth"]);
+const voiceUrl = (id) => `assets/voice/${id}.mp3${V}`;
+const voiceFor = (who, text) => { const id = lineId(who, text); return VOICE[id] ? id : null; };
+function prefetchVoices(steps) {
+  if (!A.voiceOn()) return;
+  const walk = (list) => { for (const s of list || []) { if (Array.isArray(s)) { const id = voiceFor(s[0], s[1]); if (id) A.loadVoice(voiceUrl(id)); } else if (s && s.choice) s.choice.forEach((c) => walk(c[1])); } };
+  walk(steps);
+}
 const SAVE_KEY = "pixel-shanghai-lane-radio-v1";
 const FINAL_NEED = 28;
 
@@ -150,7 +163,7 @@ async function loadScene(id) {
     still.src = `assets/scene/${sc.mode === "still" ? id + "-start" : id}.webp${V}`;
     still.style.opacity = 1;
   }
-  A.playMusic(sc.mood);
+  A.playMusic(sc.music || sc.mood);
   A.playAmbience(sc.amb);
   fx.setScene(sc.fx);
   renderHotspots();
@@ -262,6 +275,8 @@ function closeDialog() { dialogOpen = false; dlg.classList.remove("open"); app.c
 
 async function runDialog(steps, spot) {
   if (!steps || !steps.length) return;
+  dlgSpot = spot || null;
+  prefetchVoices(steps);
   openDialog();
   await runSteps(steps, spot);
   closeDialog();
@@ -286,40 +301,85 @@ async function runSteps(steps, spot) {
   }
 }
 
+// 头像背景：取说话人所在位置的场景画面，缩成 20×20 马赛克并染上角色色，静止不动；只有角色精灵会跳。
+let dlgSpot = null;
+const PBG = 20;
+const portBg = el("canvas", "pbg");
+portBg.width = portBg.height = PBG;
+const portSprite = el("img", "spr");
+function paintPortraitBg(tint) {
+  const g = portBg.getContext("2d");
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+  g.fillStyle = "#231d35"; g.fillRect(0, 0, PBG, PBG);
+  if (still.complete && still.naturalWidth) {
+    const W = still.naturalWidth, H = still.naturalHeight, s = dlgSpot || { x: 40, y: 45, w: 20, h: 40 };
+    const side = H * 0.5;
+    const sx = Math.min(W - side, Math.max(0, (s.x + s.w / 2) / 100 * W - side / 2));
+    const sy = Math.min(H - side, Math.max(0, (s.y + s.h / 2) / 100 * H - side / 2));
+    g.imageSmoothingEnabled = true;
+    g.drawImage(still, sx, sy, side, side, 0, 0, PBG, PBG);
+  }
+  g.globalCompositeOperation = "multiply"; g.globalAlpha = 0.6; g.fillStyle = tint; g.fillRect(0, 0, PBG, PBG);
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = 0.42; g.fillStyle = "#120f1c"; g.fillRect(0, 0, PBG, PBG);
+  g.globalAlpha = 1;
+}
+
+let lastPortrait = "";
 function setSpeaker(who) {
   const sp = who === "tip" ? { name: "提示", wave: "#f4c56b" } : SPEAKERS[who];
   dName.textContent = sp.name;
   dName.style.setProperty("--c", sp.wave);
   dlg.classList.toggle("tip", who === "tip");
   dlg.classList.toggle("radio", !sp.portrait && who !== "tip");
+  const key = `${who}|${dlgSpot?.id || ""}|${current?.id || ""}`;
+  if (key === lastPortrait && dPort.firstChild) return sp;
+  lastPortrait = key;
   dPort.innerHTML = "";
-  if (who === "tip") dPort.appendChild(el("img", "item-port", null)).src = `assets/item/radio.webp${V}`;
-  else if (sp.portrait) { const img = el("img"); img.src = `assets/portrait/${sp.portrait}.webp${V}`; img.alt = sp.name; dPort.appendChild(img); }
+  if (who === "tip") dPort.appendChild(el("img", "item-port", null)).src = `assets/item/radio.png${V}`;
+  else if (sp.portrait) {
+    paintPortraitBg(sp.wave);
+    if (!still.naturalWidth) lastPortrait = "";
+    portSprite.src = `assets/portrait/${sp.portrait}.png${V}`; portSprite.alt = sp.name;
+    dPort.append(portBg, portSprite);
+  }
   else { waveColor = sp.wave; dPort.appendChild(waveCanvas); }
   return sp;
 }
 
+let sayToken = 0;
 function say(who, text) {
   const sp = setSpeaker(who);
   dChoices.innerHTML = "";
   dlg.classList.remove("ready");
   const radio = !sp.portrait;
-  return new Promise((resolve) => {
-    let i = 0, done = false;
+  const vid = who !== "tip" ? voiceFor(who, text) : null;
+  const token = ++sayToken;
+  return new Promise(async (resolve) => {
+    let i = 0, done = false, timer = 0, voice = null;
     dText.textContent = "";
     waveTalking = true;
-    const cps = 36;
+    advance = null;
+    if (vid) voice = await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(who) });
+    dlg.classList.toggle("speaking", Boolean(sp.portrait));
+    // 有配音时，打字机与语音同步；停顿符号按语音节奏略微放慢
+    const pauses = (text.match(/[，。！？…]/g) || []).length;
+    const cps = voice ? Math.min(40, Math.max(7, (text.length + pauses * 4) / Math.max(0.6, voice.duration - 0.2))) : 36;
     const tick = () => {
       if (done) return;
       i++;
       dText.textContent = text.slice(0, i);
       const ch = text[i - 1];
-      if (who !== "tip" && i % 2 === 1 && !/[，。！？、…—（）\s“”]/.test(ch)) A.blip(sp.voice || 1, radio);
+      if (!voice && who !== "tip" && i % 2 === 1 && !/[，。！？、…—（）\s“”]/.test(ch)) A.blip(sp.voice || 1, radio);
       if (i >= text.length) finish();
       else timer = setTimeout(tick, /[，。！？…]/.test(ch) ? 1000 / cps * 5 : 1000 / cps);
     };
-    let timer = setTimeout(tick, 60);
-    const finish = () => { done = true; clearTimeout(timer); dText.textContent = text; waveTalking = false; dlg.classList.add("ready"); advance = () => { advance = null; A.sfx("click"); resolve(); }; };
+    timer = setTimeout(tick, 60);
+    const finish = () => {
+      done = true; clearTimeout(timer); dText.textContent = text; dlg.classList.add("ready");
+      if (!voice) { waveTalking = false; dlg.classList.remove("speaking"); }
+      advance = () => { advance = null; if (voice) A.stopVoice(); dlg.classList.remove("speaking"); A.sfx("click"); resolve(); };
+    };
+    if (voice) voice.ended.then(() => { if (token !== sayToken) return; dlg.classList.remove("speaking"); waveTalking = false; });
     advance = () => finish();
   });
 }
@@ -384,10 +444,12 @@ async function grantCard(id) {
 function renderHUD(bump = false) {
   if (!current) return;
   $("#chip").innerHTML = `<b>${current.time}</b><span>${current.name}</span><i>${current.weather}</i>`;
-  const n = mainCount();
-  $("#counter").innerHTML = `<div class="dial"><div class="needle" style="left:${8 + (n / MAIN_CARDS.length) * 84}%"></div>${Array.from({ length: 21 }, (_, i) => `<i style="left:${4 + i * 4.6}%"></i>`).join("")}</div><div class="cnt"><b>${n}</b>/${MAIN_CARDS.length}<span>段上海闲话</span></div>`;
+  const bonusIds = CARD_IDS.filter((id) => CARDS[id].bonus);
+  const n = current.bonus ? bonusIds.filter(has).length : mainCount();
+  const total = current.bonus ? bonusIds.length : MAIN_CARDS.length;
+  $("#counter").innerHTML = `<div class="dial"><div class="needle" style="left:${8 + (n / total) * 84}%"></div>${Array.from({ length: 21 }, (_, i) => `<i style="left:${4 + i * 4.6}%"></i>`).join("")}</div><div class="cnt"><b>${n}</b>/${total}<span>${current.bonus ? "段电台旧梦" : "段上海闲话"}</span></div>`;
   if (bump) { const c = $("#counter"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
-  $("#inv").innerHTML = S.items.map((it) => `<button class="slot" title="${ITEMS[it].name}：${ITEMS[it].desc}"><img src="assets/item/${ITEMS[it].icon}.webp${V}" alt="${ITEMS[it].name}"></button>`).join("");
+  $("#inv").innerHTML = S.items.map((it) => `<button class="slot" title="${ITEMS[it].name}：${ITEMS[it].desc}"><img src="assets/item/${ITEMS[it].icon}.png${V}" alt="${ITEMS[it].name}"></button>`).join("");
   $("#inv").querySelectorAll(".slot").forEach((b, i) => b.addEventListener("click", (e) => { e.stopPropagation(); const it = ITEMS[S.items[i]]; toast(`${it.name}：${it.desc}`, it.icon); }));
   $("#btn-listen").classList.toggle("locked", !S.flags.fixed);
   $("#btn-tuner").classList.toggle("locked", !S.flags.fixed);
@@ -422,7 +484,7 @@ function checkProgress() {
 let toastTimer;
 function toast(msg, icon) {
   const t = $("#toast");
-  t.innerHTML = `${icon ? `<img src="assets/item/${icon}.webp${V}" alt="">` : ""}<span>${msg}</span>`;
+  t.innerHTML = `${icon ? `<img src="assets/item/${icon}.png${V}" alt="">` : ""}<span>${msg}</span>`;
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
@@ -468,11 +530,15 @@ function renderJournal() {
       const c = CARDS[id];
       return has(id) ? `<button class="word" data-id="${id}"><b>${c.hu[0]}</b><i>${c.hu[1]}</i><span>${c.hu[2]}</span></button>` : `<div class="word lock"><b>？？</b><span>还没听到</span></div>`;
     }).join("")}</div><p class="note">读音为近似拼读，只作游戏里的趣味提示。</p>`;
-    body.querySelectorAll(".word[data-id]").forEach((b) => b.addEventListener("click", () => showCardDetail(b.dataset.id)));
+    body.querySelectorAll(".word[data-id]").forEach((b) => b.addEventListener("click", () => {
+      const hid = voiceFor("hu", CARDS[b.dataset.id].hu[0]);
+      if (hid) A.playVoice(voiceUrl(hid));
+      showCardDetail(b.dataset.id);
+    }));
   } else {
     const all = Object.keys(ITEMS);
     body.innerHTML = `<div class="items">${all.map((k) => S.items.includes(k)
-      ? `<div class="itm"><img src="assets/item/${ITEMS[k].icon}.webp${V}" alt=""><b>${ITEMS[k].name}</b><span>${ITEMS[k].desc}</span></div>`
+      ? `<div class="itm"><img src="assets/item/${ITEMS[k].icon}.png${V}" alt=""><b>${ITEMS[k].name}</b><span>${ITEMS[k].desc}</span></div>`
       : `<div class="itm lock"><div class="ph"></div><b>？？？</b><span>${k === "radio" ? "" : "在路上也许会用到"}</span></div>`).join("")}</div>
       <p class="note">道具送出去以后就不在包里了，但它们的故事留在声音卡里。</p>`;
   }
@@ -485,11 +551,21 @@ function showCardDetail(id) {
   d.classList.add("show");
   A.sfx("open");
   $("#dclose").onclick = (e) => { e.stopPropagation(); d.classList.remove("show"); A.sfx("close"); };
-  $("#replay").onclick = (e) => {
+  $("#replay").onclick = async (e) => {
     e.stopPropagation();
     const c = CARDS[id], sp = SPEAKERS[c.who];
+    const vid = voiceFor(c.who, c.quote);
+    if (vid && await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(c.who) })) return;
     let k = 0; const it = setInterval(() => { A.blip(sp.voice, !sp.portrait); if (++k > Math.min(28, c.quote.length / 2)) clearInterval(it); }, 60);
   };
+  const hu = d.querySelector(".hu");
+  const hid = CARDS[id].hu && voiceFor("hu", CARDS[id].hu[0]);
+  if (hu && hid) {
+    const b = el("button", "hu-play", "▶");
+    b.title = "听听上海话怎么讲";
+    b.addEventListener("click", (e) => { e.stopPropagation(); A.playVoice(voiceUrl(hid)); });
+    hu.prepend(b);
+  }
 }
 
 function openMap() {
@@ -502,7 +578,7 @@ function openMap() {
     const open = unlocked(id), here = current?.id === id, full = sceneCards(id).every(has);
     const got = sceneCards(id).filter(has).length;
     return `<button class="pin ${open ? "" : "locked"} ${here ? "here" : ""} ${full ? "full" : ""}" data-id="${id}" style="left:${x}%;top:${y}%">
-      <span class="num">${open ? (full ? "★" : i + 1) : "🔒"}</span><span class="pl">${open ? `<b>${sc.time}</b> ${sc.name}<small>${got}/${sceneCards(id).length}</small>` : "？？？"}</span>${here ? `<img class="me" src="assets/portrait/xiaoman.webp${V}" alt="">` : ""}</button>`;
+      <span class="num">${open ? (full ? "★" : i + 1) : "🔒"}</span><span class="pl">${open ? `<b>${sc.time}</b> ${sc.name}<small>${got}/${sceneCards(id).length}</small>` : "？？？"}</span>${here ? `<img class="me" src="assets/portrait/xiaoman.png${V}" alt="">` : ""}</button>`;
   }).join("");
   pins.querySelectorAll(".pin").forEach((b) => b.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -589,9 +665,11 @@ function nudge(d) { tuner.f = Math.round(Math.min(FMAX, Math.max(FMIN, tuner.f +
 function openSettings() {
   if (!openPanel("#settings")) return;
   const v = A.getVolumes();
-  $("#vol-music").value = v.music; $("#vol-sfx").value = v.sfx;
+  $("#vol-music").value = v.music; $("#vol-sfx").value = v.sfx; $("#vol-voice").value = v.voice;
 }
 $("#vol-music").addEventListener("input", (e) => { A.setVolumes({ music: Number(e.target.value) }); storeVol(); });
+$("#vol-voice").addEventListener("input", (e) => { A.setVolumes({ voice: Number(e.target.value) }); storeVol(); });
+$("#vol-voice").addEventListener("change", () => { const id = voiceFor("hu", "侬好"); if (id) A.playVoice(voiceUrl(id)); });
 $("#vol-sfx").addEventListener("input", (e) => { A.setVolumes({ sfx: Number(e.target.value) }); A.sfx("hover"); storeVol(); });
 function storeVol() { try { localStorage.setItem(SAVE_KEY + "-vol", JSON.stringify(A.getVolumes())); } catch {} }
 try { const v = JSON.parse(localStorage.getItem(SAVE_KEY + "-vol")); if (v) A.setVolumes(v); } catch {}
@@ -689,11 +767,103 @@ function showCredits() {
   c.innerHTML = `<h2>像素上海：弄堂电台</h2>
     <div class="stats"><div><b>${totalCount()}</b><span>段声音</span></div><div><b>${HU_CARDS.filter(has).length}</b><span>句上海话</span></div><div><b>${mins}</b><span>分钟</span></div></div>
     <div class="roll"><ul>${quotes}</ul></div>
-    <p class="thanks">原作视频《像素上海》· 海辛 Hyacinth<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、芯片音乐与音效 · Mouse（Cursor Agent）<br>字体 Fusion Pixel Font（SIL OFL 1.1）</p>
-    <div class="cbtn"><button class="px-btn gold" id="c-more">继续寻找番外电台</button><button class="px-btn" id="c-title">回到标题</button></div>`;
+    <p class="thanks">原作视频《像素上海》· 海辛 Hyacinth<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · Mouse（Cursor Agent）<br>沪语 / 四川话 / 普通话配音 · Fun-CosyVoice3 本地合成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）</p>
+    <div class="cbtn"><button class="px-btn gold" id="c-card">生成我的上海明信片</button><button class="px-btn gold" id="c-more">继续寻找番外电台</button><button class="px-btn" id="c-title">回到标题</button></div>`;
   c.classList.add("show");
+  $("#c-card").onclick = (e) => { e.stopPropagation(); A.sfx("open"); showPostcard(); };
   $("#c-more").onclick = async () => { c.classList.remove("show"); $("#ending").classList.remove("show"); app.classList.remove("ended"); $("#end-video").pause(); await travel("moon", { instant: true }); openTuner(); toast("试着把指针拨到 90.3、99.1 或 104.5"); };
   $("#c-title").onclick = () => location.reload();
+}
+
+// ---------------------------------------------------------------- 明信片
+
+const loadImg = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+function wrapText(g, text, maxW) {
+  const lines = [];
+  let cur = "";
+  for (const ch of text) {
+    if (g.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = /[，。！？、…”]/.test(ch) ? "" : ch; if (!cur) lines[lines.length - 1] += ch; }
+    else cur += ch;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+async function makePostcard() {
+  const W = 1080, H = 1440, P = 12;
+  const cv = el("canvas"); cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  await document.fonts?.load?.("40px Px").catch(() => {});
+  const got = CARD_IDS.filter(has);
+  const pool = got.filter((id) => CARDS[id].who !== "me");
+  const pickId = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "L2";
+  const pick = CARDS[pickId];
+  const sc = SCENE[CARD_HOME[pickId]?.scene || "moon"];
+  // 纸张与像素边框
+  g.fillStyle = "#f3e6c8"; g.fillRect(0, 0, W, H);
+  g.fillStyle = "#e6d3ab"; for (let y = 0; y < H; y += P * 2) for (let x = (y / P) % 4 ? P : 0; x < W; x += P * 4) g.fillRect(x, y, P, P);
+  g.fillStyle = "#231d35"; g.fillRect(0, 0, W, P * 2); g.fillRect(0, H - P * 2, W, P * 2); g.fillRect(0, 0, P * 2, H); g.fillRect(W - P * 2, 0, P * 2, H);
+  g.fillStyle = "#d9573f"; g.fillRect(P * 3, P * 3, W - P * 6, P); g.fillRect(P * 3, H - P * 4, W - P * 6, P);
+  // 场景画面：先缩成小图再放大，保持像素颗粒
+  const img = await loadImg(`assets/scene/${sc.mode === "still" ? sc.id + "-start" : sc.id}.webp${V}`);
+  const fx0 = 60, fy0 = 84, fw = W - 120, fh = Math.round(fw * 9 / 16);
+  g.fillStyle = "#231d35"; g.fillRect(fx0 - P, fy0 - P, fw + P * 2, fh + P * 2);
+  if (img) {
+    const tiny = el("canvas"); tiny.width = 240; tiny.height = 135;
+    const tg = tiny.getContext("2d"); tg.imageSmoothingEnabled = true; tg.drawImage(img, 0, 0, 240, 135);
+    g.drawImage(tiny, fx0, fy0, fw, fh);
+  }
+  // 邮戳
+  g.save(); g.translate(W - 210, fy0 + fh - 30); g.rotate(-0.18);
+  g.strokeStyle = "rgba(217,87,63,.9)"; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 112, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 96, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = "rgba(217,87,63,.95)"; g.textAlign = "center"; g.font = "24px Px, sans-serif";
+  g.fillText("上海 · 弄堂电台", 0, -22); g.font = "40px Px, sans-serif"; g.fillText(`FM ${CARD_FREQ[pickId]}`, 0, 34);
+  g.restore();
+  // 标题与数据
+  let y = fy0 + fh + 90;
+  g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "64px Px, sans-serif"; g.fillText("我的上海一天", 72, y);
+  g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.fillText(`${sc.time} · ${sc.name}`, 72, y + 52);
+  y += 120;
+  const stats = [[totalCount(), "段声音"], [HU_CARDS.filter(has).length, "句上海话"], [Object.keys(S.visited).length, "个地方"]];
+  stats.forEach(([n, label], k) => {
+    const x = 72 + k * 320;
+    g.fillStyle = "#231d35"; g.fillRect(x, y, 290, 120);
+    g.fillStyle = "#f4c56b"; g.font = "60px Px, sans-serif"; g.fillText(String(n), x + 24, y + 76);
+    const nw = g.measureText(String(n)).width;
+    g.fillStyle = "#f3e6c8"; g.font = "28px Px, sans-serif"; g.fillText(label, x + 36 + nw, y + 74);
+  });
+  // 金句
+  y += 200;
+  g.fillStyle = "#d9573f"; g.font = "90px Px, sans-serif"; g.fillText("“", 60, y + 20);
+  g.fillStyle = "#231d35"; g.font = "44px Px, sans-serif";
+  const lines = wrapText(g, pick.quote, W - 260).slice(0, 4);
+  lines.forEach((ln, k) => g.fillText(ln, 130, y + k * 62));
+  y += lines.length * 62 + 10;
+  g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.textAlign = "right"; g.fillText(`—— ${SPEAKERS[pick.who].name}`, W - 90, y);
+  // 小满
+  const me = await loadImg(`assets/portrait/xiaoman.png${V}`);
+  if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 64, H - 330, 240, 240); }
+  g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText("像素上海：弄堂电台", 330, H - 210);
+  g.fillStyle = "#8a5a3c"; g.font = "26px Px, sans-serif";
+  g.fillText("一台老收音机，一天，五十二段上海闲话", 330, H - 160);
+  g.fillText("ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 116);
+  return cv;
+}
+async function showPostcard() {
+  let box = $("#postcard");
+  if (!box) {
+    box = el("div", "panel", `<div class="p-win small pc-win"><div class="p-head"><h2>明信片</h2><div>长按图片或点下载保存</div><button class="x" aria-label="关闭">✕</button></div><div class="pc-body"><img alt="我的上海明信片"></div><div class="row"><a class="px-btn gold" id="pc-dl" download="像素上海明信片.png">下载</a><button class="px-btn" id="pc-again">换一句</button></div></div>`);
+    box.id = "postcard";
+    document.body.appendChild(box);
+    box.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); box.classList.remove("open"); A.sfx("close"); });
+    box.querySelector("#pc-again").addEventListener("click", (e) => { e.stopPropagation(); A.sfx("click"); showPostcard(); });
+  }
+  box.classList.add("open");
+  const cv = await makePostcard();
+  const url = cv.toDataURL("image/png");
+  box.querySelector("img").src = url;
+  box.querySelector("#pc-dl").href = url;
 }
 
 // ---------------------------------------------------------------- 启动
@@ -709,5 +879,15 @@ window.__game = {
   state: () => S, travel, cards: CARD_IDS, scenes: SCENES.map((s) => s.id), setListen, openMap, openJournal, openTuner,
   interact: (id) => interact(current.hotspots.find((h) => h.id === id)), current: () => current?.id, busy: () => busy || holdPlaying || entering,
   dialogOpen: () => dialogOpen, advance: () => advance && advance(), choose: (n) => choiceKeys && choiceKeys(n),
-  tune: (f) => { tuner.f = f; updateTuner(); }, mainCount, totalCount
+  tune: (f) => { tuner.f = f; updateTuner(); }, mainCount, totalCount,
+  postcard: async () => (await makePostcard()).toDataURL("image/png"),
+  defineSong: (name, def, tune) => { if (tune) A.registerTunes([tune]); A.defineSong(name, def); },
+  renderMusic: async (name, sec) => {
+    const f = await A.renderMusicOffline(name, sec);
+    let peak = 0.001; for (const x of f) peak = Math.max(peak, Math.abs(x));
+    const pcm = new Int16Array(f.length); for (let i = 0; i < f.length; i++) pcm[i] = (f[i] / peak) * 30000;
+    const bytes = new Uint8Array(pcm.buffer); let s = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
 };

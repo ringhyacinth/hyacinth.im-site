@@ -110,7 +110,7 @@ const S = (who, text) => [who, text];
 
 export const SCENES = [
   {
-    id: "tianjing", name: "石库门天井", time: "06:40", weather: "晴 · 微风", mood: "morning", amb: "birds", fx: "leaves", mode: "loop", need: 2,
+    id: "tianjing", name: "石库门天井", music: "t_zizhu", time: "06:40", weather: "晴 · 微风", mood: "morning", amb: "birds", fx: "leaves", mode: "loop", need: 2,
     intro: [
       S("me", "（外婆留下的亭子间，窗外是一方小小的天井。）"),
       S("me", "搬进来的第一个早上。外婆的老收音机放在窗台上，怎么拧都没有声音。"),
@@ -157,7 +157,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "longtang", name: "弄堂早点", time: "07:30", weather: "晴", mood: "morning", amb: "street", fx: "steam", mode: "loop", need: 3,
+    id: "longtang", name: "弄堂早点", music: "t_maibao", time: "07:30", weather: "晴", mood: "morning", amb: "street", fx: "steam", mode: "loop", need: 3,
     intro: [S("me", "弄堂里已经坐满了人。报纸、藤椅、蒸笼的白气——这里比闹钟还早醒。")],
     hotspots: [
       { id: "zhang", x: 29, y: 57, w: 12, h: 35, label: "张老伯", verb: "交谈", talk: [
@@ -234,7 +234,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "radio", name: "收音机修理铺", time: "09:10", weather: "晴 · 闷热", mood: "noon", amb: "shop", fx: "dust", mode: "loop", need: 3,
+    id: "radio", name: "收音机修理铺", music: "t_qiangwei", time: "09:10", weather: "晴 · 闷热", mood: "noon", amb: "shop", fx: "dust", mode: "loop", need: 3,
     intro: [S("me", "“收音机修理”——招牌上的红字掉了一半的漆。里面的收音机比人还多。")],
     hotspots: [
       { id: "li", x: 34, y: 28, w: 28, h: 34, label: "李师傅", verb: "交谈", talk: [
@@ -393,7 +393,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "riverroad", name: "老码头", time: "14:30", weather: "晴 · 江风", mood: "noon", amb: "dock", fx: "gulls", mode: "loop", need: 2,
+    id: "riverroad", name: "老码头", time: "14:30", weather: "晴 · 江风", mood: "noon", amb: "dock", fx: "gulls", mode: "hold", need: 2,
     intro: [S("me", "顺着江往南走，是一段老码头。钟楼、木箱、黄色的吊车，还有一个在看报纸的人。")],
     hotspots: [
       { id: "aqiang", x: 48, y: 81, w: 14, h: 19, label: "看报纸的阿强", verb: "交谈", talk: [
@@ -509,7 +509,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "rain", name: "雨夜街角", time: "20:40", weather: "小雨", mood: "rain", amb: "rain", fx: "rain", mode: "loop", need: 2,
+    id: "rain", name: "雨夜街角", music: "t_suzhou", time: "20:40", weather: "小雨", mood: "rain", amb: "rain", fx: "rain", mode: "loop", need: 2,
     intro: [S("me", "回到浦西，突然落雨了。整条马路的伞，像一朵一朵透明的蘑菇。")],
     hotspots: [
       { id: "barista", x: 0, y: 40, w: 22, h: 42, label: "咖啡店", verb: "交谈", talk: [
@@ -591,7 +591,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "rooftop", name: "天台露天电影", time: "22:10", weather: "晴 · 星空", mood: "night", amb: "summer", fx: "stars", mode: "hold", need: 2,
+    id: "rooftop", name: "天台露天电影", music: "t_yuguang", time: "22:10", weather: "晴 · 星空", mood: "night", amb: "summer", fx: "stars", mode: "hold", need: 2,
     intro: [S("me", "雨停了。爬上一栋老公房的天台——有人在放露天电影！")],
     hotspots: [
       { id: "auntie", x: 16, y: 68, w: 10, h: 29, label: "天台阿姨", verb: "交谈", talk: [

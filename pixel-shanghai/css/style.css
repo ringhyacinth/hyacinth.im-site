@@ -88,9 +88,9 @@ img { -webkit-user-drag: none; }
 .listening .hs .dot { display: none; }
 .talking .hs { pointer-events: none !important; }
 .talking .hs .dot, .talking .hs .tag { opacity: 0 !important; }
+img[src*="assets/item/"], img[src*="assets/portrait/"] { image-rendering: pixelated; }
 .touch-only { display: none; }
-@media (hover: none) { .hs .tag { display: none; } .kb-only { display: none; } .touch-only { display: inline; } }
-.touch-only { display: none; }
+@media (hover: none) { .hs .tag { display: none; } }
 @media (hover: none) and (pointer: coarse) { .kb-only { display: none; } .touch-only { display: inline; } }
 @keyframes breathe { 50% { transform: scale(1.08); } }
 @keyframes bob { 50% { transform: translate(-50%, -85%); } }
@@ -166,10 +166,11 @@ img { -webkit-user-drag: none; }
 #d-portrait { height: 100%; aspect-ratio: 1; position: relative; background: var(--ink); box-shadow: 0 0 0 var(--px) var(--cream); overflow: hidden; }
 #d-portrait img, #d-portrait canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
 #d-portrait canvas { image-rendering: pixelated; }
+#d-portrait .pbg { position: absolute; inset: 0; }
+#d-portrait .spr { position: absolute; inset: 0; object-fit: contain; image-rendering: pixelated; }
 #d-portrait .item-port { object-fit: contain; padding: 12%; }
-#dialog.open #d-portrait img { animation: talkbob .5s steps(2) infinite; }
-#dialog.ready #d-portrait img { animation: none; }
-@keyframes talkbob { 50% { transform: translateY(2%); } }
+#dialog.speaking #d-portrait .spr { animation: talkbob .32s infinite; }
+@keyframes talkbob { 0%, 49% { transform: none; } 50%, 100% { transform: translateY(2.5%); } }
 .d-main { position: relative; min-width: 0; display: flex; flex-direction: column; }
 #d-name { align-self: flex-start; color: var(--c, var(--gold)); font-size: .85em; margin-bottom: .25em; padding: 0 .3em; border-bottom: var(--px) solid currentColor; }
 #d-text { line-height: 1.5; letter-spacing: .02em; min-height: 3em; }
@@ -207,6 +208,8 @@ img { -webkit-user-drag: none; }
 .hu b { color: #ffcf9e; font-size: 1.2em; font-weight: normal; }
 .hu i { color: var(--dim); font-size: .8em; }
 .hu span { font-size: .85em; width: 100%; }
+.hu-play { align-self: center; border: 0; background: #d9573f; color: #fff; width: 1.7em; height: 1.7em; padding: 0; font-size: .8em; box-shadow: 0 var(--px) 0 #6d1d14; }
+.hu-play:active { transform: translateY(2px); box-shadow: none; }
 .hint { margin-top: .5em; color: var(--teal); font-size: .85em; }
 .card.thing .ctitle { color: #9fd9ff; }
 
@@ -273,7 +276,7 @@ img { -webkit-user-drag: none; }
 .pin .pl small { color: var(--teal); margin-left: .35em; }
 .pin:hover .num { transform: translateY(-3px); }
 .pin.here .num { animation: bob2 .8s steps(2) infinite; }
-.pin .me { position: absolute; bottom: 100%; width: 2.4em; height: 2.4em; border-radius: 50%; box-shadow: 0 0 0 var(--px) var(--gold); margin-bottom: .3em; }
+.pin .me { image-rendering: pixelated; background: var(--panel2); position: absolute; bottom: 100%; width: 2.4em; height: 2.4em; border-radius: 50%; box-shadow: 0 0 0 var(--px) var(--gold); margin-bottom: .3em; }
 @keyframes bob2 { 50% { transform: translateY(-4px); } }
 #map-list { display: none; grid-template-columns: 1fr 1fr; gap: .35em; margin-top: .6em; font-size: .8em; }
 .ml { display: flex; align-items: center; gap: .4em; background: var(--panel2); border: 0; padding: .35em .45em; text-align: left; box-shadow: 0 0 0 2px var(--line); min-width: 0; }
@@ -370,6 +373,11 @@ kbd { font-family: inherit; background: var(--panel2); padding: 0 .35em; box-sha
 .roll li b { display: block; font-weight: normal; color: var(--gold); font-size: .8em; }
 @keyframes roll { to { transform: translateY(-100%); } }
 .thanks { color: var(--dim); font-size: .8em; line-height: 1.8; margin: 0; }
+#postcard { z-index: 80; }
+.pc-win { width: min(92vw, 30em, calc(62vh * 0.75 + 2em)); }
+.pc-body img { display: block; width: 100%; height: auto; box-shadow: 0 0 0 var(--px) var(--ink); }
+.pc-win .row { display: flex; gap: .6em; justify-content: center; margin-top: .7em; }
+.pc-win a.px-btn { text-decoration: none; }
 .cbtn { display: flex; gap: .8em; flex-wrap: wrap; justify-content: center; }
 
 /* ------------------------------------------------ 竖屏 */

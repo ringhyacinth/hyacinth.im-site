@@ -1,8 +1,9 @@
-// 全部声音都在浏览器里实时合成：芯片乐、环境声、音效、角色“嘀嗒”语音。
+// 全部音乐与音效都在浏览器里实时合成：芯片乐、环境声、音效、角色“嘀嗒”语音；角色配音为预录 MP3。
+import { TUNES as TUNE_DATA } from "./tunes.js?v=20260924";
 
 let ctx = null;
-let master, musicBus, ambBus, sfxBus, voiceBus, radioBus, noiseBuf;
-const settings = { music: 0.55, sfx: 0.8 };
+let master, musicBus, musicDuck, ambBus, sfxBus, voiceBus, radioBus, lineBus, lineRadio, noiseBuf;
+const settings = { music: 0.55, sfx: 0.8, voice: 0.9 };
 let listenGain = null;
 
 const midiHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
@@ -25,7 +26,14 @@ export function initAudio() {
   comp.threshold.value = -16; comp.ratio.value = 3; comp.attack.value = 0.01; comp.release.value = 0.25;
   master = ctx.createGain(); master.gain.value = 0.9;
   master.connect(comp).connect(ctx.destination);
-  musicBus = ctx.createGain(); musicBus.gain.value = settings.music; musicBus.connect(master);
+  musicDuck = ctx.createGain(); musicDuck.connect(master);
+  musicBus = ctx.createGain(); musicBus.gain.value = settings.music; musicBus.connect(musicDuck);
+  // 角色配音：直出，或经过“电波/电话”滤波
+  lineBus = ctx.createGain(); lineBus.gain.value = settings.voice * 1.25; lineBus.connect(master);
+  lineRadio = ctx.createBiquadFilter(); lineRadio.type = "bandpass"; lineRadio.frequency.value = 1700; lineRadio.Q.value = 0.7;
+  const lineShaper = ctx.createWaveShaper(); lineShaper.curve = makeCurve(2.5);
+  const lineRadioGain = ctx.createGain(); lineRadioGain.gain.value = 1.6;
+  lineRadio.connect(lineShaper).connect(lineRadioGain).connect(lineBus);
   ambBus = ctx.createGain(); ambBus.gain.value = 0.7 * settings.sfx; ambBus.connect(master);
   sfxBus = ctx.createGain(); sfxBus.gain.value = settings.sfx; sfxBus.connect(master);
   voiceBus = ctx.createGain(); voiceBus.gain.value = 0.55 * settings.sfx; voiceBus.connect(master);
@@ -37,6 +45,30 @@ export function initAudio() {
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   buildWaves();
   startListenStatic();
+}
+
+// 离线渲染某个 BGM 为 PCM（用于自动化试听检查），不影响正在运行的上下文。
+export async function renderMusicOffline(name, seconds = 30, rate = 22050) {
+  const saved = { ctx, master, musicBus, noiseBuf, pulse12, pulse25, music };
+  const off = new OfflineAudioContext(1, Math.ceil(seconds * rate), rate);
+  ctx = off;
+  master = off.createGain(); master.gain.value = 0.9; master.connect(off.destination);
+  musicBus = off.createGain(); musicBus.gain.value = 0.8; musicBus.connect(master);
+  noiseBuf = off.createBuffer(1, rate * 2, rate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  buildWaves();
+  music = null;
+  const song = SONGS[name];
+  const tune = song && song.tune && TUNES[song.tune];
+  if (!tune) throw new Error(`no tune for ${name}`);
+  music = { name, radio: false, song, tune, out: musicBus, bar: 0, pass: 0, nextBarTime: 0.05 };
+  let fake = 0;
+  Object.defineProperty(off, "currentTime", { get: () => fake });
+  while (music.nextBarTime < seconds) { scheduleTune(); fake = music.nextBarTime; }
+  ({ ctx, master, musicBus, noiseBuf, pulse12, pulse25, music } = saved);
+  const buf = await off.startRendering();
+  return buf.getChannelData(0);
 }
 
 function makeCurve(k) {
@@ -55,11 +87,13 @@ function buildWaves() {
   pulse12 = pw(0.125); pulse25 = pw(0.25);
 }
 
-export function setVolumes({ music, sfx }) {
+export function setVolumes({ music, sfx, voice }) {
   if (music != null) settings.music = music;
   if (sfx != null) settings.sfx = sfx;
+  if (voice != null) settings.voice = voice;
   if (!ctx) return;
   const t = ctx.currentTime;
+  lineBus.gain.setTargetAtTime(settings.voice * 1.25, t, 0.1);
   musicBus.gain.setTargetAtTime(settings.music * duckLevel, t, 0.1);
   sfxBus.gain.setTargetAtTime(settings.sfx, t, 0.1);
   ambBus.gain.setTargetAtTime(0.7 * settings.sfx, t, 0.1);
@@ -71,6 +105,47 @@ let duckLevel = 1;
 export function duckMusic(level) {
   duckLevel = level;
   if (ctx) musicBus.gain.setTargetAtTime(settings.music * level, ctx.currentTime, 0.25);
+}
+
+// ---------------------------------------------------------------- 角色配音
+
+const voiceCache = new Map();
+export const voiceOn = () => Boolean(ctx) && settings.voice > 0.01;
+export function loadVoice(url) {
+  if (!ctx) return Promise.resolve(null);
+  if (!voiceCache.has(url)) {
+    voiceCache.set(url, fetch(url)
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then((b) => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .catch(() => { voiceCache.delete(url); return null; }));
+  }
+  return voiceCache.get(url);
+}
+let curVoice = null;
+export function stopVoice() {
+  if (!curVoice) return;
+  const v = curVoice; curVoice = null;
+  try { v.src.stop(); } catch {}
+  v.finish();
+}
+export async function playVoice(url, { radio = false, wait = 900 } = {}) {
+  if (!voiceOn()) return null;
+  const buf = await Promise.race([loadVoice(url), new Promise((r) => setTimeout(() => r(null), wait))]);
+  if (!buf) return null;
+  stopVoice();
+  if (ctx.state === "suspended") ctx.resume();
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(radio ? lineRadio : lineBus);
+  const t = ctx.currentTime;
+  musicDuck.gain.setTargetAtTime(0.4, t, 0.06);
+  let finish;
+  const ended = new Promise((r) => { finish = () => { musicDuck.gain.setTargetAtTime(1, ctx.currentTime, 0.35); r(); }; });
+  const handle = { src, finish, ended, duration: buf.duration };
+  src.onended = () => { if (curVoice === handle) { curVoice = null; finish(); } };
+  curVoice = handle;
+  src.start(t + 0.02);
+  return handle;
 }
 
 // ---------------------------------------------------------------- 基本音源
@@ -158,14 +233,19 @@ const INST = {
 const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], penta: [0, 2, 4, 7, 9], mpenta: [0, 3, 5, 7, 10], dorian: [0, 2, 3, 5, 7, 9, 10] };
 
 const SONGS = {
-  title: { bpm: 70, root: 63, scale: "penta", prog: [[0, 4, 7, 11], [9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 17]], lead: "bell", comp: "pad", arp: "bell", arpRate: 4, bass: false, drums: "none", seed: 11 },
-  morning: { bpm: 96, root: 60, scale: "penta", prog: [[0, 4, 7, 14], [9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 17]], lead: "lead", arp: "arp", arpRate: 2, bass: "root5", drums: "light", seed: 3 },
+  // 8-bit 老歌（tunes.js）；其余为程序生成
+  title: { tune: "yeshanghai", tempo: 0.62, lead: "bell", lead2: "soft", comp: "pad", drums: "none" },
+  t_zizhu: { tune: "zizhudiao", tempo: 1, lead: "soft", lead2: "lead", comp: "pluck", drums: "none" },
+  t_maibao: { tune: "maibaoge", tempo: 0.95, lead: "lead", lead2: "arp", comp: "pluck", drums: "march" },
+  t_qiangwei: { tune: "qiangwei", tempo: 0.92, lead: "clar", lead2: "lead", comp: "ep", drums: "rumba" },
+  t_suzhou: { tune: "suzhouhebian", tempo: 1, swing: 0.6, lead: "soft", lead2: "clar", comp: "ep", drums: "foxtrot" },
+  t_yuguang: { tune: "yuguangqu", tempo: 0.9, lead: "soft", lead2: "bell", comp: "arp", drums: "none" },
+  dusk: { tune: "meigui", tempo: 1, swing: 0.62, lead: "clar", lead2: "lead", comp: "ep", drums: "swing" },
+  jazz: { tune: "yeshanghai", tempo: 1, swing: 0.64, lead: "clar", lead2: "lead", comp: "ep", drums: "swing" },
+  finale: { tune: "caiyunzhuiyue", tempo: 0.8, lead: "soft", lead2: "bell", comp: "pad", arp: "arp", drums: "none" },  morning: { bpm: 96, root: 60, scale: "penta", prog: [[0, 4, 7, 14], [9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 17]], lead: "lead", arp: "arp", arpRate: 2, bass: "root5", drums: "light", seed: 3 },
   noon: { bpm: 108, root: 67, scale: "major", prog: [[0, 4, 7, 11], [5, 9, 12, 16], [2, 5, 9, 12], [7, 11, 14, 17]], lead: "lead", arp: "arp", arpRate: 2, bass: "bounce", drums: "pop", seed: 7 },
-  dusk: { bpm: 92, swing: 0.64, root: 65, scale: "dorian", prog: [[2, 5, 9, 12], [7, 11, 14, 17], [0, 4, 7, 11], [9, 13, 16, 19]], lead: "clar", comp: "ep", bass: "walk", drums: "brush", seed: 21 },
   night: { bpm: 76, root: 56, scale: "penta", prog: [[0, 4, 7, 11], [4, 7, 11, 14], [5, 9, 12, 16], [5, 8, 12, 15]], lead: "soft", comp: "pad", arp: "arp", arpRate: 2, bass: "long", drums: "light", seed: 5 },
   rain: { bpm: 70, swing: 0.6, root: 57, scale: "mpenta", prog: [[0, 3, 7, 10], [-4, 0, 3, 7], [5, 8, 12, 15], [7, 10, 14, 17]], lead: "soft", comp: "ep", bass: "long", drums: "lofi", seed: 9 },
-  finale: { bpm: 64, root: 65, scale: "penta", prog: [[0, 4, 7, 11], [-3, 0, 4, 7], [5, 9, 12, 16], [7, 11, 14, 17]], lead: "bell", comp: "pad", arp: "bell", arpRate: 2, bass: "long", drums: "none", seed: 2 },
-  jazz: { bpm: 136, swing: 0.66, root: 58, scale: "major", prog: [[0, 4, 7, 9], [9, 12, 16, 19], [2, 5, 9, 12], [7, 11, 14, 17]], lead: "clar", comp: "ep", bass: "walk", drums: "swing", seed: 31 },
   spring: { bpm: 84, root: 62, scale: "penta", prog: [[0, 4, 7, 14], [9, 12, 16, 21], [5, 9, 12, 14], [0, 7, 12, 16]], lead: "pluck", arp: "pluck", arpRate: 4, bass: "long", drums: "none", seed: 17 },
   autumn: { bpm: 80, swing: 0.58, root: 64, scale: "mpenta", prog: [[0, 3, 7, 14], [5, 8, 12, 15], [-2, 2, 5, 9], [3, 7, 10, 14]], lead: "soft", comp: "ep", bass: "long", drums: "lofi", seed: 13 }
 };
@@ -214,6 +294,50 @@ function compose(song) {
   return [...A, ...vary(A), ...B, ...vary(C)];
 }
 
+// ---------------------------------------------------------------- 老歌曲谱
+
+const TUNES = {};
+export function registerTunes(list) { for (const t of list) TUNES[t.id] = prepareTune(t); }
+
+const PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const pcOf = (s) => (PC[s[0]] + (s[1] === "#" ? 1 : s[1] === "b" ? -1 : 0) + 12) % 12;
+const QUAL = [["maj7", [0, 4, 7, 11]], ["m7b5", [0, 3, 6, 10]], ["m7", [0, 3, 7, 10]], ["m6", [0, 3, 7, 9]], ["dim7", [0, 3, 6, 9]], ["dim", [0, 3, 6]], ["aug", [0, 4, 8]], ["sus4", [0, 5, 7]], ["sus2", [0, 2, 7]], ["m", [0, 3, 7]], ["7", [0, 4, 7, 10]], ["9", [0, 4, 7, 10]], ["6", [0, 4, 7, 9]], ["", [0, 4, 7]]];
+function chordOffsets(sym, keyPc) {
+  const m = /^([A-G][#b]?)(.*?)(\/.*)?$/.exec(String(sym || "C").trim());
+  if (!m) return [0, 4, 7];
+  let off = (pcOf(m[1]) - keyPc + 12) % 12;
+  if (off > 7) off -= 12;
+  const q = (QUAL.find(([k]) => m[2] === k || (k && m[2].startsWith(k))) || QUAL[QUAL.length - 1])[1];
+  return q.map((x) => x + off);
+}
+
+function prepareTune(t) {
+  const beats = Number(String(t.meter || "4/4").split("/")[0]);
+  const steps = beats * 4;
+  const keyPc = pcOf(t.key || "C");
+  let root = t.tonic_midi ?? 60 + (keyPc > 6 ? keyPc - 12 : keyPc);
+  while (root > 65) root -= 12;
+  while (root < 54) root += 12;
+  const bars = [];
+  let abs = t.pickup_beats ? (beats - t.pickup_beats) * 4 : 0;
+  for (const [m, len] of t.notes) {
+    const d = Math.round(len * 4);
+    const b = Math.floor(abs / steps);
+    while (bars.length <= b) bars.push([]);
+    if (m != null) bars[b].push({ s: abs % steps, d, m });
+    abs += d;
+  }
+  while (bars.length < Math.ceil(abs / steps)) bars.push([]);
+  // 一格里可以有两个和弦（各占半小节），用空格分开
+  const chords = (t.chords || []).map((c) => String(c).trim().split(/\s+/).map((x) => chordOffsets(x, keyPc)));
+  const pick = t.pickup_beats ? 1 : 0;
+  const chordAt = (i) => chords[Math.max(0, i - pick) % Math.max(1, chords.length)] || [[0, 4, 7]];
+  return { ...t, beats, steps, root, bars, chordAt };
+}
+
+registerTunes(TUNE_DATA);
+export function defineSong(name, def) { SONGS[name] = def; }
+
 let music = null;
 
 export function playMusic(name, { radio = false } = {}) {
@@ -221,6 +345,7 @@ export function playMusic(name, { radio = false } = {}) {
   if (music && music.name === name && music.radio === radio) return;
   stopMusic();
   const song = SONGS[name] || SONGS.morning;
+  if (song.tune && TUNES[song.tune]) return playTune(name, song, radio);
   const melody = compose(song);
   const out = ctx.createGain();
   out.gain.value = 0.0001;
@@ -232,6 +357,85 @@ export function playMusic(name, { radio = false } = {}) {
   music = { name, radio, song, melody, out, bar: 0, nextBarTime: ctx.currentTime + 0.1 };
   music.timer = setInterval(scheduleMusic, 60);
   scheduleMusic();
+}
+
+function playTune(name, song, radio) {
+  const tune = TUNES[song.tune];
+  const out = ctx.createGain();
+  out.gain.value = 0.0001;
+  out.gain.setTargetAtTime(1, ctx.currentTime, 0.6);
+  if (radio) {
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1400; bp.Q.value = 0.6;
+    out.connect(bp).connect(musicBus);
+  } else out.connect(musicBus);
+  music = { name, radio, song, tune, out, bar: 0, pass: 0, nextBarTime: ctx.currentTime + 0.1 };
+  music.timer = setInterval(scheduleTune, 60);
+  scheduleTune();
+}
+
+const INTERLUDE = 2;
+function scheduleTune() {
+  if (!music || !music.tune) return;
+  const { song, tune, out } = music;
+  const bpm = (tune.bpm || 90) * (song.tempo || 1);
+  const sixteenth = 60 / bpm / 4;
+  const steps = tune.steps, barLen = sixteenth * steps;
+  const cycle = tune.bars.length + INTERLUDE;
+  while (music.nextBarTime < ctx.currentTime + 0.4) {
+    const t0 = music.nextBarTime;
+    const i = music.bar % cycle;
+    if (i === 0 && music.bar > 0) music.pass++;
+    const inTune = i < tune.bars.length;
+    const cell = inTune ? tune.chordAt(i) : tune.chordAt(i - tune.bars.length + (tune.pickup_beats ? 1 : 0));
+    const chordFor = (s) => cell[cell.length > 1 && s >= steps / 2 ? 1 : 0];
+    const chord = cell[0];
+    const swing = song.swing || 0.5;
+    const sw = (step) => t0 + (Math.floor(step / 2) * 2 + (step % 2)) * sixteenth + (step % 2 ? (swing - 0.5) * 2 * sixteenth : 0);
+    const root = tune.root + (song.transpose || 0);
+    if (inTune) {
+      const lead = music.pass % 2 && song.lead2 ? song.lead2 : song.lead || "lead";
+      const shift = (song.transpose || 0) + (music.pass % 2 && song.lead2Octave ? song.lead2Octave : 0);
+      for (const n of tune.bars[i]) INST[lead](n.m + shift, sw(n.s), n.d * sixteenth * 0.92, song.leadVol || 1, out);
+    }
+    if (song.solo) { music.bar++; music.nextBarTime += barLen; continue; }
+    const stab = (s, v = 0.8) => { const inst = INST[song.comp || "ep"]; for (const c of chordFor(s)) inst(root - 12 + c, sw(s), sixteenth * 1.6, v, out); };
+    const bassOf = (s) => root - 24 + chordFor(s)[0];
+    const fifthOf = (b) => (b + 7 > root - 12 ? b - 5 : b + 7);
+    const split = cell.length > 1;
+    if (song.comp === "pad") for (const [s, len] of split ? [[0, steps / 2], [steps / 2, steps / 2]] : [[0, steps]]) for (const c of chordFor(s)) INST.pad(root - 12 + c, sw(s), sixteenth * len * 0.98, 1, out);
+    if (song.comp === "arp" || song.arp) {
+      const seq = [0, 1, 2, 3, 2, 1];
+      for (let s = 0, k = 0; s < steps; s += 2, k++) { const ch = chordFor(s); INST[song.arp || "arp"](root + ch[seq[k % seq.length] % ch.length], sw(s), sixteenth * 2, 0.8, out); }
+    }
+    const comping = song.comp !== "pad" && song.comp !== "arp";
+    if (tune.beats === 3) {
+      INST.bass(bassOf(0), t0, sixteenth * 3.5, 1, out);
+      if (comping) { stab(4); stab(8); }
+    } else if (tune.beats === 2) {
+      const b = bassOf(0);
+      INST.bass(split ? b : music.bar % 2 ? fifthOf(b) : b, t0, sixteenth * 3.5, 1, out);
+      if (split) INST.bass(bassOf(4), sw(4), sixteenth * 3.5, 0.9, out);
+      if (comping) { stab(2, 0.6); stab(6, 0.6); }
+    } else {
+      if (song.bass === "walk" && !split) {
+        const b = bassOf(0), next = root - 24 + tune.chordAt((i + 1) % cycle)[0][0];
+        [b, b + (chord[1] - chord[0]), b + 7, next + (next > b ? -1 : 1)].forEach((m, k) => INST.bass(m, sw(k * 4), sixteenth * 3.5, 0.9, out));
+      } else { const b = bassOf(0), b2 = bassOf(8); INST.bass(b, t0, sixteenth * 7, 1, out); INST.bass(split ? b2 : fifthOf(b), sw(8), sixteenth * 7, 0.85, out); }
+      if (comping) { stab(4); stab(12); }
+    }
+    const dr = song.drums || "none";
+    for (let s = 0; s < steps; s++) {
+      const t = sw(s);
+      if (dr === "waltz") { if (s === 0) INST.kick(t, 0.5, out); if (s === 4 || s === 8) INST.hat(t, 0.5, out); }
+      if (dr === "march") { if (s === 0) INST.kick(t, 0.7, out); if (s === steps / 2) INST.snare(t, 0.5, out); if (s % 2 === 0) INST.hat(t, 0.45, out); }
+      if (dr === "foxtrot") { if (s === 0 || s === 8) INST.kick(t, 0.55, out); if (s === 4 || s === 12) INST.brush(t, 0.9, out); if (s % 2 === 0) INST.hat(t, 0.35, out); }
+      if (dr === "swing") { if (s % 4 === 0 || s % 4 === 3) INST.ride(t, 0.7, out); if (s === 4 || s === 12) INST.brush(t, 0.8, out); if (s === 0) INST.kick(t, 0.4, out); }
+      if (dr === "rumba") { if (s === 0 || s === 6 || s === 8) INST.kick(t, 0.5, out); if (s === 3 || s === 6 || s === 10 || s === 12) INST.hat(t, 0.5, out); }
+      if (dr === "lofi") { if (s === 0 || s === 7 || s === 10) INST.kick(t, 0.5, out); if (s === 4 || s === 12) INST.snare(t, 0.4, out); if (s % 2 === 0) INST.hat(t, 0.3, out); }
+    }
+    music.bar++;
+    music.nextBarTime += barLen;
+  }
 }
 
 export function stopMusic(fade = 0.8) {
