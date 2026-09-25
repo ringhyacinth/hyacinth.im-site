@@ -1,13 +1,13 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925e";
-import * as A from "./audio.js?v=20260925e";
-import { FX, pixelWipe } from "./fx.js?v=20260925e";
-import { lineId } from "./voice-id.js?v=20260925e";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925e";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925f";
+import * as A from "./audio.js?v=20260925f";
+import { FX, pixelWipe } from "./fx.js?v=20260925f";
+import { lineId } from "./voice-id.js?v=20260925f";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925f";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925e";
+const V = "?v=20260925f";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
