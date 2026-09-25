@@ -1,13 +1,13 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925";
-import * as A from "./audio.js?v=20260925";
-import { FX, pixelWipe } from "./fx.js?v=20260925";
-import { lineId } from "./voice-id.js?v=20260925";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925b";
+import * as A from "./audio.js?v=20260925b";
+import { FX, pixelWipe } from "./fx.js?v=20260925b";
+import { lineId } from "./voice-id.js?v=20260925b";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925b";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925";
+const V = "?v=20260925b";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -813,8 +813,10 @@ let started = false;
 function showTitle() {
   const t = $("#title");
   t.classList.add("show");
-  $("#t-continue").hidden = !hasSave() || !Object.keys(S.visited).length;
-  $("#t-start").textContent = T($("#t-continue").hidden ? "开始新的一天" : "重新开始");
+  const resumable = hasSave() && Object.keys(S.visited).length > 0;
+  $("#t-continue").hidden = !resumable;
+  t.classList.toggle("resumable", resumable);
+  $("#t-start").textContent = T(resumable ? "重新开始" : "开始新的一天");
 }
 async function begin(resume) {
   A.initAudio();

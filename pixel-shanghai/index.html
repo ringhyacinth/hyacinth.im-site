@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#0d0b18">
 <link rel="icon" href="assets/item/radio.png">
 <link rel="preload" href="assets/font/fusion-pixel-zh.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=20260925">
+<link rel="stylesheet" href="css/style.css?v=20260925b">
 </head>
 <body>
 <div id="app">
@@ -69,7 +69,7 @@
     <div class="p-win wide">
       <div class="p-head"><h2 data-i18n>上海 · 一天</h2><div id="map-progress"></div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div>
       <div class="map-wrap">
-        <img src="assets/scene/map.png?v=20260925" alt="像素上海地图" data-i18n-alt>
+        <img src="assets/scene/map.png?v=20260925b" alt="像素上海地图" data-i18n-alt>
         <svg id="map-route" viewBox="0 0 100 56.25" preserveAspectRatio="none"></svg>
         <div id="map-pins"></div>
       </div>
@@ -120,16 +120,20 @@
     <video id="tv" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" loop></video>
     <div class="t-shade"></div>
     <div class="t-box">
-      <div class="t-kicker">PIXEL SHANGHAI · LANE RADIO</div>
-      <h1>像素上海</h1>
-      <div class="t-sign"><span>弄</span><span>堂</span><span>电</span><span>台</span></div>
-      <p class="t-line" data-i18n>一台老收音机 · 一天 · 五十二段上海闲话</p>
-      <div id="t-load"><div class="bar"><i></i></div><span>正在调频…</span></div>
-      <div class="t-btns">
-        <button id="t-start" class="px-btn gold big">开始新的一天</button>
-        <button id="t-continue" class="px-btn big" hidden data-i18n>继续</button>
+      <div class="t-logo">
+        <div class="t-kicker">PIXEL SHANGHAI · LANE RADIO</div>
+        <h1>像素上海</h1>
+        <div class="t-sign"><span>弄</span><span>堂</span><span>电</span><span>台</span></div>
+        <p class="t-line" data-i18n>一台老收音机 · 一天 · 五十二段上海闲话</p>
       </div>
-      <p class="t-tip" data-i18n-html>🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音</p>
+      <div class="t-menu">
+        <div id="t-load"><div class="bar"><i></i></div><span>正在调频…</span></div>
+        <div class="t-btns">
+          <button id="t-continue" class="px-btn gold big" hidden data-i18n>继续</button>
+          <button id="t-start" class="px-btn gold big">开始新的一天</button>
+        </div>
+        <p class="t-tip" data-i18n>🎧 建议戴耳机 · 全程上海话配音</p>
+      </div>
     </div>
     <div class="t-foot" data-i18n>原作视频《像素上海》海辛 Hyacinth · 游戏制作 Mouse</div>
     <div class="t-lang"><button class="lang-btn" data-lang="zh">中文</button><button class="lang-btn" data-lang="en">EN</button></div>
@@ -142,6 +146,6 @@
   </div>
 </div>
 <noscript>这个小游戏需要开启 JavaScript。</noscript>
-<script type="module" src="js/main.js?v=20260925"></script>
+<script type="module" src="js/main.js?v=20260925b"></script>
 </body>
 </html>

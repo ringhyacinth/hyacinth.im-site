@@ -1,6 +1,6 @@
 // 中 / EN 切换。配音始终是原声，英文模式只换字幕与界面。
-import { lineId } from "./voice-id.js?v=20260925";
-import { EN } from "./i18n-en.js?v=20260925";
+import { lineId } from "./voice-id.js?v=20260925b";
+import { EN } from "./i18n-en.js?v=20260925b";
 
 const KEY = "pixel-shanghai-lang";
 let lang = (() => {
@@ -60,7 +60,8 @@ const UI = {
   "正在调频…": "Tuning in…",
   '🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音':
     '🎧 Headphones recommended · Tap glowing people and things to talk · Once the radio works, <span class="kb-only">press Space</span><span class="touch-only">tap “Listen”</span> to find hidden sounds · Voices in Shanghainese with English subtitles',
-  "原作视频《像素上海》海辛 Hyacinth · 游戏制作 Mouse": "Based on the film “Pixel Shanghai” by Hyacinth · Game by Mouse",
+  "原作视频《像素上海》海辛 Hyacinth · 游戏制作 Mouse": "Based on “Pixel Shanghai” by Hyacinth · Game by Mouse",
+  "🎧 建议戴耳机 · 全程上海话配音": "🎧 Best with headphones · Shanghainese voices, English subs",
   "这个小游戏需要开启 JavaScript。": "This little game needs JavaScript.",
   // 工具栏与面板
   "收听": "Listen", "调频": "Tuner", "地图": "Map", "收集簿": "Journal", "设置": "Settings",

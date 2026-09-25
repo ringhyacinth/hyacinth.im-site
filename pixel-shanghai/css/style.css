@@ -340,16 +340,24 @@ kbd { font-family: inherit; background: var(--panel2); padding: 0 .35em; box-sha
 #title.leave { animation: leave .7s steps(7) forwards; }
 @keyframes leave { to { opacity: 0; } }
 #tv { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.t-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13, 11, 24, .15), rgba(13, 11, 24, .1) 40%, rgba(13, 11, 24, .82)); }
-.t-box { position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: .5em; padding: 0 1em; font-size: max(14px, min(2.6vw, 4.2vh)); }
-.t-kicker { letter-spacing: .4em; color: var(--gold); font-size: .75em; text-shadow: 0 2px 0 var(--ink); }
+.t-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13, 11, 24, .35), rgba(13, 11, 24, .2) 35%, rgba(13, 11, 24, .45) 70%, rgba(13, 11, 24, .88)); }
+.t-box { position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2.6em; padding: 0 1em; font-size: max(14px, min(2.6vw, 4.2vh)); }
+/* 文字后面一层柔和的暗色光晕，背景大楼只从四周透出来 */
+.t-box::before { content: ""; position: absolute; left: 50%; top: 50%; width: 150%; height: 135%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; background: radial-gradient(ellipse at center, rgba(13, 11, 24, .66) 0%, rgba(13, 11, 24, .45) 40%, rgba(13, 11, 24, 0) 70%); }
+.t-logo, .t-menu { display: flex; flex-direction: column; align-items: center; }
+.t-line, .t-tip, .t-foot { text-wrap: balance; }
+.t-logo { gap: .45em; }
+.t-menu { gap: .9em; }
+.t-kicker { letter-spacing: .3em; color: var(--gold); font-size: .6em; opacity: .8; text-shadow: 0 2px 0 var(--ink); margin-bottom: .2em; }
 #title h1 { margin: 0; font-weight: normal; font-size: 4.2em; letter-spacing: .15em; color: #fff4dc; line-height: 1; text-shadow: 0 .06em 0 #d9573f, 0 .12em 0 #6d1d14, .06em .12em 0 #6d1d14, 0 .18em 0 var(--ink), .1em .2em 0 rgba(0, 0, 0, .35); }
-.t-sign { display: flex; gap: .25em; margin: .2em 0 .4em; }
+.t-sign { display: flex; gap: .25em; margin: .25em 0 .5em; }
 .t-sign span { display: grid; place-items: center; width: 1.9em; height: 1.9em; font-size: 1.3em; background: #2a1020; color: #ffd3a1; box-shadow: 0 0 0 .12em #ff6b4a, 0 0 .6em .1em rgba(255, 107, 74, .6); text-shadow: 0 0 .4em #ff8a5c; animation: neon 3s steps(1) infinite; }
 .t-sign span:nth-child(3) { animation-delay: .7s; }
 @keyframes neon { 0%, 72%, 76%, 100% { opacity: 1; } 74% { opacity: .35; } }
-.t-line { margin: 0; color: var(--cream); text-shadow: 0 2px 0 var(--ink); letter-spacing: .1em; }
-.t-btns { display: flex; gap: .8em; margin-top: .9em; }
+.t-line { margin: .3em 0 0; color: rgba(245, 232, 200, .82); font-size: .74em; text-shadow: 0 2px 0 var(--ink), 0 0 .5em #0d0b18, 0 0 1em rgba(13, 11, 24, .8); letter-spacing: .08em; }
+.t-btns { display: flex; flex-direction: column; align-items: center; gap: .7em; }
+#title.resumable #t-start { border: 0; border-image: none; padding: .2em .6em; font-size: .62em; color: rgba(245, 232, 200, .6); text-decoration: underline; text-underline-offset: .3em; text-shadow: 0 2px 0 var(--ink); }
+#title.resumable #t-start:hover { color: var(--cream); }
 .t-lang { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 14px; display: flex; gap: 2px; z-index: 3; }
 .t-lang .lang-btn { background: rgba(18, 15, 28, .7); border: 0; color: var(--dim); font: inherit; font-size: .8em; padding: .3em .7em; box-shadow: 0 0 0 2px var(--line); cursor: pointer; }
 .lang-btn.on { color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
@@ -366,8 +374,16 @@ em.rom { font-style: normal; color: #ffcf9e; }
 #t-load .bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, var(--gold) 0 6px, #d9a53b 6px 8px); transition: width .2s steps(4); }
 #title.loading #t-load { display: flex; }
 #title.loading .t-btns { display: none; }
-.t-tip { color: var(--dim); font-size: .7em; max-width: 34em; line-height: 1.6; text-shadow: 0 2px 0 var(--ink); margin-top: .8em; }
-.t-foot { position: absolute; bottom: 1.2em; left: 0; right: 0; text-align: center; font-size: 12px; color: rgba(245, 232, 200, .55); }
+.t-tip { margin: 0; color: rgba(245, 232, 200, .6); font-size: .58em; letter-spacing: .05em; text-shadow: 0 2px 0 var(--ink), 0 0 .6em #0d0b18; }
+.t-foot { position: absolute; bottom: max(1em, env(safe-area-inset-bottom)); left: 0; right: 0; padding: 0 16px; text-align: center; font-size: clamp(11px, .8vw, 14px); line-height: 1.5; color: rgba(245, 232, 200, .42); }
+/* 竖屏：标志放上部，按钮放下部，中间留给背景 */
+@media (orientation: portrait) and (max-aspect-ratio: 4/5) {
+  #title { align-items: stretch; }
+  .t-box { justify-content: space-between; gap: 0; padding: 19vh 1em 15vh; font-size: max(14px, min(4.4vw, 3vh)); }
+  .t-box::before { top: 34%; height: 70%; width: 140%; }
+  .t-menu { position: relative; }
+  .t-menu::before { content: ""; position: absolute; left: 50%; top: 50%; width: 120vw; height: 200%; transform: translate(-50%, -50%); z-index: -1; background: radial-gradient(ellipse at center, rgba(13, 11, 24, .6), rgba(13, 11, 24, 0) 65%); }
+}
 
 /* ------------------------------------------------ 结局 */
 

@@ -1,5 +1,5 @@
 // 全部音乐与音效都在浏览器里实时合成：芯片乐、环境声、音效、角色“嘀嗒”语音；角色配音为预录 MP3。
-import { TUNES as TUNE_DATA } from "./tunes.js?v=20260925";
+import { TUNES as TUNE_DATA } from "./tunes.js?v=20260925b";
 
 let ctx = null;
 let master, musicBus, musicDuck, ambBus, sfxBus, voiceBus, radioBus, lineBus, lineRadio, noiseBuf;
