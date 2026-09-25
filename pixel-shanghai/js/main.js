@@ -1,13 +1,13 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925b";
-import * as A from "./audio.js?v=20260925b";
-import { FX, pixelWipe } from "./fx.js?v=20260925b";
-import { lineId } from "./voice-id.js?v=20260925b";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925b";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925c";
+import * as A from "./audio.js?v=20260925c";
+import { FX, pixelWipe } from "./fx.js?v=20260925c";
+import { lineId } from "./voice-id.js?v=20260925c";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925c";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925b";
+const V = "?v=20260925c";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -250,6 +250,11 @@ function prefetchNext() {
 // ---------------------------------------------------------------- 热点
 
 function pendingCards(h) { return h.cards.filter((c) => !has(c)); }
+// 卡片都收过了，但现在点下去能拿到或交出道具的热点，也要亮起来
+function hasErrand(h) {
+  const b = h.talk.find((t) => cond(t.when));
+  return !!b && b.do.some((s) => (s.give && !S.items.includes(s.give)) || (s.take && S.items.includes(s.take)));
+}
 
 function renderHotspots() {
   const wrap = $("#hotspots");
@@ -259,7 +264,7 @@ function renderHotspots() {
   current.hotspots.forEach((h, i) => {
     const b = el("button", "hs");
     b.style.cssText = `left:${h.x}%;top:${h.y}%;width:${h.w}%;height:${h.h}%`;
-    const pend = pendingCards(h).length;
+    const pend = pendingCards(h).length || hasErrand(h);
     if (h.hidden) b.classList.add("secret");
     if (pend) b.classList.add("new"); else if (h.cards.length) b.classList.add("done");
     if (h.hidden && !S.flags.fixed) b.classList.add("sealed");
