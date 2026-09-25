@@ -1,5 +1,5 @@
 // 全部音乐与音效都在浏览器里实时合成：芯片乐、环境声、音效、角色“嘀嗒”语音；角色配音为预录 MP3。
-import { TUNES as TUNE_DATA } from "./tunes.js?v=20260924b";
+import { TUNES as TUNE_DATA } from "./tunes.js?v=20260925";
 
 let ctx = null;
 let master, musicBus, musicDuck, ambBus, sfxBus, voiceBus, radioBus, lineBus, lineRadio, noiseBuf;
@@ -17,8 +17,16 @@ function mulberry(seed) {
   };
 }
 
+// 切到后台时挂起，回到前台后在下一次触摸时恢复（iOS 会把上下文置为 interrupted）
+let pausedByPage = false;
+export function setPageHidden(hidden) {
+  if (!ctx) return;
+  if (hidden && ctx.state === "running") { pausedByPage = true; ctx.suspend(); }
+  if (!hidden && pausedByPage) { pausedByPage = false; ctx.resume().catch(() => {}); }
+}
+
 export function initAudio() {
-  if (ctx) { if (ctx.state === "suspended") ctx.resume(); return; }
+  if (ctx) { if (ctx.state !== "running" && !document.hidden) ctx.resume().catch(() => {}); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   ctx = new AC();

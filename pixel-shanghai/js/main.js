@@ -1,12 +1,13 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260924b";
-import * as A from "./audio.js?v=20260924b";
-import { FX, pixelWipe } from "./fx.js?v=20260924b";
-import { lineId } from "./voice-id.js?v=20260924b";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925";
+import * as A from "./audio.js?v=20260925";
+import { FX, pixelWipe } from "./fx.js?v=20260925";
+import { lineId } from "./voice-id.js?v=20260925";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260924b";
+const V = "?v=20260925";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -82,12 +83,18 @@ const fx = new FX($("#fx"));
 const wipe = $("#wipe");
 let portraitMode = false;
 
+const pan = { x: 0, tx: 0, lw: 0, min: 0, drag: null, moved: false };
 function layout() {
   const vw = innerWidth, vh = innerHeight;
   portraitMode = vh / vw > 1.05;
   let sw, sh, sl, st;
-  if (portraitMode) { sw = vw; sh = (vw * 9) / 16; sl = 0; st = Math.max(0, Math.min(vh * 0.12, (vh - sh) * 0.22)); }
+  // 竖屏：画框接近正方形，16:9 画面放大后可左右拖动
+  if (portraitMode) { sw = vw; sh = Math.round(Math.min(vh * 0.47, vw * 1.05)); sl = 0; st = Math.round(Math.max(8, Math.min(vh * 0.04, vh - sh - 330))); }
   else { sw = Math.min(vw, (vh * 16) / 9); sh = (sw * 9) / 16; sl = (vw - sw) / 2; st = (vh - sh) / 2; }
+  pan.lw = portraitMode ? Math.round((sh * 16) / 9) : sw;
+  pan.min = Math.min(0, sw - pan.lw);
+  app.style.setProperty("--lw", `${pan.lw}px`);
+  pan.tx = Math.max(pan.min, Math.min(0, pan.tx));
   const base = portraitMode ? vw / 21 : sh / 27;
   const fs = Math.max(12, Math.round(base / 6) * 6);
   const ui = Math.max(12, Math.round((portraitMode ? vw / 26 : sh / 36) / 6) * 6);
@@ -106,10 +113,39 @@ stage.addEventListener("pointermove", (e) => {
   par.ty = ((e.clientY - r.top) / r.height - 0.5) * -1.0;
 });
 (function parLoop() {
-  par.x += (par.tx - par.x) * 0.06; par.y += (par.ty - par.y) * 0.06;
-  layer.style.transform = `scale(1.03) translate(${par.x}%, ${par.y}%)`;
+  if (portraitMode) {
+    pan.x += (pan.tx - pan.x) * (pan.drag ? 0.6 : 0.12);
+    layer.style.transform = `translate3d(${Math.round(pan.x)}px, 0, 0)`;
+    const hint = $("#pan-hint");
+    if (hint) { hint.classList.toggle("l", pan.x < -4); hint.classList.toggle("r", pan.x > pan.min + 4); }
+  } else {
+    par.x += (par.tx - par.x) * 0.06; par.y += (par.ty - par.y) * 0.06;
+    layer.style.transform = `scale(1.03) translate(${par.x}%, ${par.y}%)`;
+  }
   requestAnimationFrame(parLoop);
 })();
+
+// 竖屏拖动画面；拖动过的这次触摸不触发热点
+function panTo(xPercent, instant = false) {
+  if (!portraitMode) return;
+  const vw = stage.clientWidth;
+  pan.tx = Math.max(pan.min, Math.min(0, vw / 2 - (xPercent / 100) * pan.lw));
+  if (instant) pan.x = pan.tx;
+}
+stage.addEventListener("pointerdown", (e) => {
+  if (!portraitMode || e.target.closest(".hud")) return;
+  pan.drag = { x: e.clientX, start: pan.tx, id: e.pointerId };
+  pan.moved = false;
+});
+addEventListener("pointermove", (e) => {
+  if (!pan.drag || e.pointerId !== pan.drag.id) return;
+  const dx = e.clientX - pan.drag.x;
+  if (Math.abs(dx) > 8) pan.moved = true;
+  if (pan.moved) { pan.tx = Math.max(pan.min, Math.min(0, pan.drag.start + dx)); S.flags.panned = true; $("#pan-hint")?.classList.add("used"); }
+});
+addEventListener("pointerup", () => { pan.drag = null; });
+addEventListener("pointercancel", () => { pan.drag = null; });
+stage.addEventListener("click", (e) => { if (pan.moved) { e.stopPropagation(); e.preventDefault(); pan.moved = false; } }, true);
 
 // ---------------------------------------------------------------- 场景
 
@@ -167,6 +203,8 @@ async function loadScene(id) {
   A.playAmbience(sc.amb);
   fx.setScene(sc.fx);
   renderHotspots();
+  const vis = sc.hotspots.filter((h) => !h.hidden);
+  panTo(vis.length ? vis.reduce((s, h) => s + h.x + h.w / 2, 0) / vis.length : 50, true);
   renderHUD();
   prefetchNext();
   return first;
@@ -196,7 +234,8 @@ async function afterEnter(id) {
 
 async function showSceneCard(sc) {
   const box = $("#scenecard");
-  box.innerHTML = `<div class="sc-time">${sc.time}</div><div class="sc-name">${sc.name}</div><div class="sc-weather">${sc.weather}</div>`;
+  box.innerHTML = `<div class="sc-time">${tScene(sc, "time")}</div><div class="sc-name">${tScene(sc, "name")}</div><div class="sc-weather">${tScene(sc, "weather")}</div>`;
+  box.classList.toggle("en", isEN());
   box.classList.remove("show"); void box.offsetWidth; box.classList.add("show");
   await wait(1700);
 }
@@ -224,8 +263,9 @@ function renderHotspots() {
     if (h.hidden) b.classList.add("secret");
     if (pend) b.classList.add("new"); else if (h.cards.length) b.classList.add("done");
     if (h.hidden && !S.flags.fixed) b.classList.add("sealed");
-    b.innerHTML = `<i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><span class="tag">${h.label}<em>${h.verb}</em></span>${pend && !h.hidden ? '<b class="dot"></b>' : ""}`;
-    b.setAttribute("aria-label", `${h.label}：${h.verb}`);
+    const label = tHot(current.id, h, "label"), verb = tHot(current.id, h, "verb");
+    b.innerHTML = `<i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><span class="tag">${label}<em>${verb}</em></span>${pend && !h.hidden ? '<b class="dot"></b>' : ""}`;
+    b.setAttribute("aria-label", `${label}: ${verb}`);
     b.addEventListener("pointerenter", () => { if (!dialogOpen) A.sfx("hover"); });
     b.addEventListener("click", (e) => { e.stopPropagation(); interact(h); });
     wrap.appendChild(b);
@@ -237,12 +277,13 @@ function renderHotspots() {
 async function interact(h) {
   if (dialogOpen || busy || holdPlaying || entering) return;
   if (h.hidden && (!S.flags.fixed || !listening)) {
-    if (!S.flags.fixed) { toast("这里好像有声音……但收音机还修不好。"); return; }
-    toast("打开「收听模式」才能听见这里的声音"); pulse("#btn-listen"); return;
+    if (!S.flags.fixed) { toast(T("这里好像有声音……但收音机还修不好。")); return; }
+    toast(T("打开「收听模式」才能听见这里的声音")); pulse("#btn-listen"); return;
   }
   A.sfx("click");
   const branch = h.talk.find((t) => cond(t.when));
   if (!branch) return;
+  panTo(h.x + h.w / 2);
   await runDialog(branch.do, h);
   renderHotspots();
   renderHUD();
@@ -291,12 +332,12 @@ async function runSteps(steps, spot) {
       const i = await choose(s.choice.map((c) => c[0]));
       await runSteps(s.choice[i][1], spot);
     } else if (s.card) await grantCard(s.card);
-    else if (s.give) { if (!S.items.includes(s.give)) { S.items.push(s.give); save(); A.sfx("item"); renderHUD(); toast(`获得：${ITEMS[s.give].name}`, ITEMS[s.give].icon); } }
+    else if (s.give) { if (!S.items.includes(s.give)) { S.items.push(s.give); save(); A.sfx("item"); renderHUD(); toast(T("获得：{name}", { name: tItem(s.give, ITEMS[s.give], "name") }), ITEMS[s.give].icon); } }
     else if (s.take) { S.items = S.items.filter((x) => x !== s.take); save(); renderHUD(); }
     else if (s.set) { S.flags[s.set] = true; save(); if (s.set === "fixed") { renderHUD(); pulse("#btn-listen"); } }
     else if (s.sfx) A.sfx(s.sfx);
     else if (s.tip) await say("tip", s.tip);
-    else if (s.tipCount) { const n = mainCount(); await say("tip", `已收集 ${n} / ${s.tipCount} 段声音，还差 ${Math.max(0, s.tipCount - n)} 段。打开收听模式，回到之前的场景，找找藏起来的声音吧。`); }
+    else if (s.tipCount) { const n = mainCount(); await say("tip", T("已收集 {n} / {need} 段声音，还差 {left} 段。打开收听模式，回到之前的场景，找找藏起来的声音吧。", { n, need: s.tipCount, left: Math.max(0, s.tipCount - n) })); }
     else if (s.ending) pendingEnding = true;
   }
 }
@@ -345,8 +386,8 @@ addEventListener("resize", () => { if (dPort.contains(portSprite)) fitSprite(); 
 
 let lastPortrait = "";
 function setSpeaker(who) {
-  const sp = who === "tip" ? { name: "提示", wave: "#f4c56b" } : SPEAKERS[who];
-  dName.textContent = sp.name;
+  const sp = who === "tip" ? { name: T("提示"), wave: "#f4c56b" } : SPEAKERS[who];
+  dName.textContent = who === "tip" ? sp.name : tSpeaker(who, sp.name);
   dName.style.setProperty("--c", sp.wave);
   dlg.classList.toggle("tip", who === "tip");
   dlg.classList.toggle("radio", !sp.portrait && who !== "tip");
@@ -374,6 +415,10 @@ function say(who, text) {
   const radio = !sp.portrait;
   const vid = who !== "tip" ? voiceFor(who, text) : null;
   const token = ++sayToken;
+  // 配音按原文查；屏幕显示当前语言的字幕（英文里 *xx* 为沪语拼读，打完后高亮）
+  const shown = who === "tip" ? tTip(text) : tLine(who, text);
+  text = plain(shown);
+  dlg.classList.toggle("en", isEN());
   return new Promise(async (resolve) => {
     let i = 0, done = false, timer = 0, voice = null;
     dText.textContent = "";
@@ -382,7 +427,7 @@ function say(who, text) {
     if (vid) voice = await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(who) });
     dlg.classList.toggle("speaking", Boolean(sp.portrait));
     // 有配音时，打字机与语音同步；停顿符号按语音节奏略微放慢
-    const pauses = (text.match(/[，。！？…]/g) || []).length;
+    const pauses = (text.match(/[，。！？…,.!?]/g) || []).length;
     const cps = voice ? Math.min(40, Math.max(7, (text.length + pauses * 4) / Math.max(0.6, voice.duration - 0.2))) : 36;
     const tick = () => {
       if (done) return;
@@ -391,11 +436,11 @@ function say(who, text) {
       const ch = text[i - 1];
       if (!voice && who !== "tip" && i % 2 === 1 && !/[，。！？、…—（）\s“”]/.test(ch)) A.blip(sp.voice || 1, radio);
       if (i >= text.length) finish();
-      else timer = setTimeout(tick, /[，。！？…]/.test(ch) ? 1000 / cps * 5 : 1000 / cps);
+      else timer = setTimeout(tick, /[，。！？…]/.test(ch) || (/[,.!?]/.test(ch) && text[i] === " ") ? 1000 / cps * 5 : 1000 / cps);
     };
     timer = setTimeout(tick, 60);
     const finish = () => {
-      done = true; clearTimeout(timer); dText.textContent = text; dlg.classList.add("ready");
+      done = true; clearTimeout(timer); dText.innerHTML = rich(shown); dlg.classList.add("ready");
       if (!voice) { waveTalking = false; dlg.classList.remove("speaking"); }
       advance = () => { advance = null; if (voice) A.stopVoice(); dlg.classList.remove("speaking"); A.sfx("click"); resolve(); };
     };
@@ -409,7 +454,7 @@ function choose(labels) {
   dChoices.innerHTML = "";
   return new Promise((resolve) => {
     labels.forEach((l, i) => {
-      const b = el("button", "choice", `<span>${i + 1}</span>${l}`);
+      const b = el("button", "choice", `<span>${i + 1}</span>${rich(tChoice(l))}`);
       b.addEventListener("click", (e) => { e.stopPropagation(); advance = null; A.sfx("click"); dChoices.innerHTML = ""; resolve(i); });
       dChoices.appendChild(b);
     });
@@ -438,11 +483,13 @@ function thumbStyle(id) {
 function cardHTML(id, big = false) {
   const c = CARDS[id], sp = SPEAKERS[c.who];
   const sc = SCENE[CARD_HOME[id]?.scene];
-  const hu = c.hu ? `<div class="hu"><b>${c.hu[0]}</b><i>${c.hu[1]}</i><span>${c.hu[2]}</span></div>` : "";
+  const hu = c.hu ? `<div class="hu"><b>${c.hu[0]}</b><i>${c.hu[1]}</i><span>${rich(tHu(id, c))}</span></div>` : "";
+  // 英文模式：英文在上，中文原句小字在下
+  const zh = isEN() ? `<p class="quote-zh">${c.quote}</p>` : "";
   return `<div class="card ${c.kind === "thing" ? "thing" : ""} ${c.hidden ? "secret" : ""} ${big ? "big" : ""}">
-    <div class="thumb" style="${thumbStyle(id)}"><span class="freq">FM ${CARD_FREQ[id]}</span>${c.hidden ? '<span class="badge">隐藏</span>' : ""}</div>
-    <div class="cbody"><div class="ctitle">${c.title}</div><div class="cwho" style="--c:${sp.wave}">${sp.name} · ${sc ? sc.name : ""}</div>
-    <p class="quote">“${c.quote}”</p>${hu}${c.freq ? `<div class="hint">📻 线索频率 FM ${c.freq}</div>` : ""}</div></div>`;
+    <div class="thumb" style="${thumbStyle(id)}"><span class="freq">FM ${CARD_FREQ[id]}</span>${c.hidden ? `<span class="badge">${T("隐藏")}</span>` : ""}</div>
+    <div class="cbody"><div class="ctitle">${rich(tCard(id, c, "title"))}</div><div class="cwho" style="--c:${sp.wave}">${tSpeaker(c.who, sp.name)} · ${sc ? tScene(sc, "name") : ""}</div>
+    <p class="quote">“${rich(tCard(id, c, "quote"))}”</p>${zh}${hu}${c.freq ? `<div class="hint">${T("📻 线索频率 FM {f}", { f: c.freq })}</div>` : ""}</div></div>`;
 }
 
 async function grantCard(id) {
@@ -450,7 +497,7 @@ async function grantCard(id) {
   S.cards[id] = Date.now(); save();
   A.sfx("card");
   const pop = $("#cardpop");
-  pop.innerHTML = `<div class="pop-head">收到一段声音 · ${mainCount()}/${MAIN_CARDS.length}</div>${cardHTML(id, true)}<div class="pop-foot">点击继续</div>`;
+  pop.innerHTML = `<div class="pop-head">${T("收到一段声音 · {n}/{total}", { n: mainCount(), total: MAIN_CARDS.length })}</div>${cardHTML(id, true)}<div class="pop-foot">${T("点击继续")}</div>`;
   pop.classList.add("show");
   renderHUD(true);
   await new Promise((r) => { const f = (e) => { e.stopPropagation(); pop.removeEventListener("click", f); advance = null; r(); }; pop.addEventListener("click", f); advance = () => f(new Event("x")); });
@@ -463,14 +510,15 @@ async function grantCard(id) {
 
 function renderHUD(bump = false) {
   if (!current) return;
-  $("#chip").innerHTML = `<b>${current.time}</b><span>${current.name}</span><i>${current.weather}</i>`;
+  $("#chip").innerHTML = `<b>${tScene(current, "time")}</b><span>${tScene(current, "name")}</span><i>${tScene(current, "weather")}</i>`;
   const bonusIds = CARD_IDS.filter((id) => CARDS[id].bonus);
   const n = current.bonus ? bonusIds.filter(has).length : mainCount();
   const total = current.bonus ? bonusIds.length : MAIN_CARDS.length;
-  $("#counter").innerHTML = `<div class="dial"><div class="needle" style="left:${8 + (n / total) * 84}%"></div>${Array.from({ length: 21 }, (_, i) => `<i style="left:${4 + i * 4.6}%"></i>`).join("")}</div><div class="cnt"><b>${n}</b>/${total}<span>${current.bonus ? "段电台旧梦" : "段上海闲话"}</span></div>`;
+  $("#counter").innerHTML = `<div class="dial"><div class="needle" style="left:${8 + (n / total) * 84}%"></div>${Array.from({ length: 21 }, (_, i) => `<i style="left:${4 + i * 4.6}%"></i>`).join("")}</div><div class="cnt"><b>${n}</b>/${total}<span>${T(current.bonus ? "段电台旧梦" : "段上海闲话")}</span></div>`;
   if (bump) { const c = $("#counter"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
-  $("#inv").innerHTML = S.items.map((it) => `<button class="slot" title="${ITEMS[it].name}：${ITEMS[it].desc}"><img src="assets/item/${ITEMS[it].icon}.png${V}" alt="${ITEMS[it].name}"></button>`).join("");
-  $("#inv").querySelectorAll(".slot").forEach((b, i) => b.addEventListener("click", (e) => { e.stopPropagation(); const it = ITEMS[S.items[i]]; toast(`${it.name}：${it.desc}`, it.icon); }));
+  const itemText = (k) => `${tItem(k, ITEMS[k], "name")}${isEN() ? ": " : "："}${tItem(k, ITEMS[k], "desc")}`;
+  $("#inv").innerHTML = S.items.map((it) => `<button class="slot" title="${itemText(it)}"><img src="assets/item/${ITEMS[it].icon}.png${V}" alt="${tItem(it, ITEMS[it], "name")}"></button>`).join("");
+  $("#inv").querySelectorAll(".slot").forEach((b, i) => b.addEventListener("click", (e) => { e.stopPropagation(); const k = S.items[i]; toast(itemText(k), ITEMS[k].icon); }));
   $("#btn-listen").classList.toggle("locked", !S.flags.fixed);
   $("#btn-tuner").classList.toggle("locked", !S.flags.fixed);
   $("#btn-listen").classList.toggle("on", listening);
@@ -481,13 +529,13 @@ function renderHUD(bump = false) {
   if (!current.bonus && next && cleared(current.id)) {
     const ns = SCENE[next];
     nb.hidden = false;
-    nb.innerHTML = `下一站 <b>${ns.time} ${ns.name}</b> ▸`;
+    nb.innerHTML = T("下一站 <b>{time} {name}</b> ▸", { time: tScene(ns, "time"), name: tScene(ns, "name") });
     nb.onclick = (e) => { e.stopPropagation(); travel(next); };
   } else if (current.bonus) {
-    nb.hidden = false; nb.innerHTML = "回到今天 ▸"; nb.onclick = (e) => { e.stopPropagation(); openMap(); };
+    nb.hidden = false; nb.innerHTML = T("回到今天 ▸"); nb.onclick = (e) => { e.stopPropagation(); openMap(); };
   } else nb.hidden = true;
   const left = sceneCards(current.id).filter((c) => !has(c));
-  $("#scene-left").textContent = left.length ? `这里还有 ${left.length} 段声音` : "这里的声音都收集到了";
+  $("#scene-left").textContent = left.length ? T("这里还有 {n} 段声音", { n: left.length }) : T("这里的声音都收集到了");
 }
 
 function checkProgress() {
@@ -496,7 +544,7 @@ function checkProgress() {
   if (next && cleared(current.id) && !S.flags[`unlock_${next}`]) {
     S.flags[`unlock_${next}`] = true; save();
     A.sfx("unlock");
-    toast(`新地点解锁：${SCENE[next].name}`);
+    toast(T("新地点解锁：{name}", { name: tScene(SCENE[next], "name") }));
     pulse("#next");
   }
 }
@@ -514,7 +562,7 @@ function pulse(sel) { const e = $(sel); if (!e) return; e.classList.remove("puls
 // ---------------------------------------------------------------- 收听模式
 
 function setListen(on) {
-  if (on && !S.flags.fixed) { toast("收音机还没修好。去弄堂口的修理铺看看。"); return; }
+  if (on && !S.flags.fixed) { toast(T("收音机还没修好。去弄堂口的修理铺看看。")); return; }
   listening = on;
   app.classList.toggle("listening", on);
   fx.setListen(on);
@@ -534,22 +582,22 @@ let jTab = "cards";
 function openJournal() { if (!openPanel("#journal")) return; renderJournal(); }
 function renderJournal() {
   const body = $("#j-body");
-  $("#j-stats").innerHTML = `声音卡 <b>${totalCount()}</b>/${CARD_IDS.length} · 沪语词条 <b>${HU_CARDS.filter(has).length}</b>/${HU_CARDS.length}`;
+  $("#j-stats").innerHTML = T("声音卡 <b>{a}</b>/{b} · 沪语词条 <b>{c}</b>/{d}", { a: totalCount(), b: CARD_IDS.length, c: HU_CARDS.filter(has).length, d: HU_CARDS.length });
   document.querySelectorAll("#journal .tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === jTab));
   if (jTab === "cards") {
     body.innerHTML = SCENES.filter((sc) => !sc.bonus || S.bonus[sc.id]).map((sc) => {
       const ids = sceneCards(sc.id);
       const known = S.visited[sc.id];
-      return `<section><h3>${known ? `${sc.time} · ${sc.name}` : "？？？"}<small>${ids.filter(has).length}/${ids.length}</small></h3><div class="grid">${ids.map((id) => has(id)
-        ? `<button class="mini" data-id="${id}"><div class="thumb" style="${thumbStyle(id)}"></div><span>${CARDS[id].title}</span>${CARDS[id].hu ? "<em>沪</em>" : ""}</button>`
-        : `<div class="mini lock"><div class="thumb"></div><span>${CARDS[id].hidden ? "藏起来的声音" : "？？？"}</span></div>`).join("")}</div></section>`;
-    }).join("") + (BONUS.some((b) => !S.bonus[b.id]) ? `<section class="bonus-hint"><h3>番外电台<small>${BONUS.filter((b) => S.bonus[b.id]).length}/${BONUS.length}</small></h3><p>用「调频」旋钮在夜空里找找别的电台。线索藏在一些声音卡里。</p></section>` : "");
+      return `<section><h3>${known ? `${tScene(sc, "time")} · ${tScene(sc, "name")}` : T("？？？")}<small>${ids.filter(has).length}/${ids.length}</small></h3><div class="grid">${ids.map((id) => has(id)
+        ? `<button class="mini" data-id="${id}"><div class="thumb" style="${thumbStyle(id)}"></div><span>${rich(tCard(id, CARDS[id], "title"))}</span>${CARDS[id].hu ? "<em>沪</em>" : ""}</button>`
+        : `<div class="mini lock"><div class="thumb"></div><span>${T(CARDS[id].hidden ? "藏起来的声音" : "？？？")}</span></div>`).join("")}</div></section>`;
+    }).join("") + (BONUS.some((b) => !S.bonus[b.id]) ? `<section class="bonus-hint"><h3>${T("番外电台")}<small>${BONUS.filter((b) => S.bonus[b.id]).length}/${BONUS.length}</small></h3><p>${T("用「调频」旋钮在夜空里找找别的电台。线索藏在一些声音卡里。")}</p></section>` : "");
     body.querySelectorAll(".mini[data-id]").forEach((b) => b.addEventListener("click", () => showCardDetail(b.dataset.id)));
   } else if (jTab === "hu") {
     body.innerHTML = `<div class="dict">${HU_CARDS.map((id) => {
       const c = CARDS[id];
-      return has(id) ? `<button class="word" data-id="${id}"><b>${c.hu[0]}</b><i>${c.hu[1]}</i><span>${c.hu[2]}</span></button>` : `<div class="word lock"><b>？？</b><span>还没听到</span></div>`;
-    }).join("")}</div><p class="note">读音为近似拼读，只作游戏里的趣味提示。</p>`;
+      return has(id) ? `<button class="word" data-id="${id}"><b>${c.hu[0]}</b><i>${c.hu[1]}</i><span>${rich(tHu(id, c))}</span></button>` : `<div class="word lock"><b>${T("？？")}</b><span>${T("还没听到")}</span></div>`;
+    }).join("")}</div><p class="note">${T("读音为近似拼读，只作游戏里的趣味提示。")}</p>`;
     body.querySelectorAll(".word[data-id]").forEach((b) => b.addEventListener("click", () => {
       const hid = voiceFor("hu", CARDS[b.dataset.id].hu[0]);
       if (hid) A.playVoice(voiceUrl(hid));
@@ -558,16 +606,16 @@ function renderJournal() {
   } else {
     const all = Object.keys(ITEMS);
     body.innerHTML = `<div class="items">${all.map((k) => S.items.includes(k)
-      ? `<div class="itm"><img src="assets/item/${ITEMS[k].icon}.png${V}" alt=""><b>${ITEMS[k].name}</b><span>${ITEMS[k].desc}</span></div>`
-      : `<div class="itm lock"><div class="ph"></div><b>？？？</b><span>${k === "radio" ? "" : "在路上也许会用到"}</span></div>`).join("")}</div>
-      <p class="note">道具送出去以后就不在包里了，但它们的故事留在声音卡里。</p>`;
+      ? `<div class="itm"><img src="assets/item/${ITEMS[k].icon}.png${V}" alt=""><b>${tItem(k, ITEMS[k], "name")}</b><span>${tItem(k, ITEMS[k], "desc")}</span></div>`
+      : `<div class="itm lock"><div class="ph"></div><b>${T("？？？")}</b><span>${k === "radio" ? "" : T("在路上也许会用到")}</span></div>`).join("")}</div>
+      <p class="note">${T("道具送出去以后就不在包里了，但它们的故事留在声音卡里。")}</p>`;
   }
 }
 document.querySelectorAll("#journal .tab").forEach((t) => t.addEventListener("click", (e) => { e.stopPropagation(); jTab = t.dataset.tab; A.sfx("click"); renderJournal(); }));
 
 function showCardDetail(id) {
   const d = $("#j-detail");
-  d.innerHTML = `${cardHTML(id, true)}<div class="dbtn"><button class="px-btn" id="replay">▶ 重听</button><button class="px-btn" id="dclose">收起</button></div>`;
+  d.innerHTML = `${cardHTML(id, true)}<div class="dbtn"><button class="px-btn" id="replay">${T("▶ 重听")}</button><button class="px-btn" id="dclose">${T("收起")}</button></div>`;
   d.classList.add("show");
   A.sfx("open");
   $("#dclose").onclick = (e) => { e.stopPropagation(); d.classList.remove("show"); A.sfx("close"); };
@@ -582,7 +630,7 @@ function showCardDetail(id) {
   const hid = CARDS[id].hu && voiceFor("hu", CARDS[id].hu[0]);
   if (hu && hid) {
     const b = el("button", "hu-play", "▶");
-    b.title = "听听上海话怎么讲";
+    b.title = T("听听上海话怎么讲");
     b.addEventListener("click", (e) => { e.stopPropagation(); A.playVoice(voiceUrl(hid)); });
     hu.prepend(b);
   }
@@ -598,12 +646,12 @@ function openMap() {
     const open = unlocked(id), here = current?.id === id, full = sceneCards(id).every(has);
     const got = sceneCards(id).filter(has).length;
     return `<button class="pin ${open ? "" : "locked"} ${here ? "here" : ""} ${full ? "full" : ""}" data-id="${id}" style="left:${x}%;top:${y}%">
-      <span class="num">${open ? (full ? "★" : i + 1) : "🔒"}</span><span class="pl">${open ? `<b>${sc.time}</b> ${sc.name}<small>${got}/${sceneCards(id).length}</small>` : "？？？"}</span>${here ? `<img class="me" src="assets/portrait/xiaoman.png${V}" alt="">` : ""}</button>`;
+      <span class="num">${open ? (full ? "★" : i + 1) : "🔒"}</span><span class="pl">${open ? `<b>${tScene(sc, "time")}</b> ${tScene(sc, "name")}<small>${got}/${sceneCards(id).length}</small>` : T("？？？")}</span>${here ? `<img class="me" src="assets/portrait/xiaoman.png${V}" alt="">` : ""}</button>`;
   }).join("");
   pins.querySelectorAll(".pin").forEach((b) => b.addEventListener("click", (e) => {
     e.stopPropagation();
     const id = b.dataset.id;
-    if (!unlocked(id)) { A.sfx("click"); toast("先把上一站的声音收集够"); return; }
+    if (!unlocked(id)) { A.sfx("click"); toast(T("先把上一站的声音收集够")); return; }
     if (id === current?.id) { closeAllPanels(); return; }
     travel(id);
   }));
@@ -611,24 +659,24 @@ function openMap() {
     const sc = SCENE[id], open = unlocked(id), here = current?.id === id;
     const got = sceneCards(id).filter(has).length, all = sceneCards(id).length;
     return `<button class="ml ${open ? "" : "locked"} ${here ? "here" : ""} ${got === all ? "full" : ""}" data-id="${id}">
-      <i>${open ? (got === all ? "★" : i + 1) : "🔒"}</i>${open ? `<em><b>${sc.time}</b><span>${sc.name}</span></em><small>${got}/${all}</small>` : "<em><span>？？？</span></em>"}</button>`;
+      <i>${open ? (got === all ? "★" : i + 1) : "🔒"}</i>${open ? `<em><b>${tScene(sc, "time")}</b><span>${tScene(sc, "name")}</span></em><small>${got}/${all}</small>` : `<em><span>${T("？？？")}</span></em>`}</button>`;
   }).join("");
   $("#map-list").querySelectorAll(".ml").forEach((b) => b.addEventListener("click", (e) => {
     e.stopPropagation();
     $(`#map-pins .pin[data-id="${b.dataset.id}"]`).click();
   }));
   $("#map-bonus").innerHTML = BONUS.map((b) => S.bonus[b.id]
-    ? `<button class="px-btn gold" data-id="${b.id}">📻 FM ${b.freq} ${b.name}</button>`
-    : `<span class="px-btn ghost">📻 FM ??.? ？？？</span>`).join("");
+    ? `<button class="px-btn gold" data-id="${b.id}">📻 FM ${b.freq} ${tScene(SCENE[b.id], "name")}</button>`
+    : `<span class="px-btn ghost">📻 FM ??.? ${T("？？？")}</span>`).join("");
   $("#map-bonus").querySelectorAll("button").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); travel(b.dataset.id); }));
-  $("#map-progress").textContent = `今天已经收集 ${mainCount()} 段上海闲话`;
+  $("#map-progress").textContent = T("今天已经收集 {n} 段上海闲话", { n: mainCount() });
 }
 
 // 调频
 let tuner = { f: 95.0, drag: false, locked: null };
 const FMIN = 87.5, FMAX = 108;
 function openTuner() {
-  if (!S.flags.fixed) { toast("收音机还没修好。"); return; }
+  if (!S.flags.fixed) { toast(T("收音机还没修好。")); return; }
   if (!openPanel("#tuner")) return;
   const scale = $("#t-scale");
   scale.innerHTML = Array.from({ length: 21 }, (_, i) => { const f = FMIN + i * ((FMAX - FMIN) / 20); return `<i style="left:${(i / 20) * 100}%"><span>${i % 2 === 0 ? Math.round(f) : ""}</span></i>`; }).join("")
@@ -643,7 +691,7 @@ function stopTuner() {
   A.setStatic(listening ? 0.035 : 0);
   A.tunerSignal(null, 0); A.tunerRelease();
   A.duckMusic(1);
-  if (current) A.playMusic(current.mood);
+  if (current) A.playMusic(current.music || current.mood);
 }
 function updateTuner() {
   tuner.active = true;
@@ -659,12 +707,12 @@ function updateTuner() {
   const info = $("#t-info");
   if (best && strength > 0.86) {
     tuner.locked = best;
-    info.innerHTML = `<b>锁定信号 · FM ${best.freq}</b><span>${best.name}</span><button class="px-btn gold" id="t-go">跟着声音去 ▸</button>`;
+    info.innerHTML = `<b>${T("锁定信号 · FM {f}", { f: best.freq })}</b><span>${tScene(SCENE[best.id], "name")}</span><button class="px-btn gold" id="t-go">${T("跟着声音去 ▸")}</button>`;
     $("#t-go").onclick = (e) => { e.stopPropagation(); const id = best.id; if (!S.bonus[id]) { S.bonus[id] = true; save(); A.sfx("lock"); } travel(id); };
     if (!tuner.lockedSfx) { A.sfx("lock"); tuner.lockedSfx = true; }
   } else {
     tuner.locked = null; tuner.lockedSfx = false;
-    info.innerHTML = strength > 0.35 ? `<b>好像有什么……</b><span>再慢一点</span>` : `<b>沙沙沙……</b><span>慢慢转动旋钮，寻找藏在夜空里的电台</span>`;
+    info.innerHTML = strength > 0.35 ? `<b>${T("好像有什么……")}</b><span>${T("再慢一点")}</span>` : `<b>${T("沙沙沙……")}</b><span>${T("慢慢转动旋钮，寻找藏在夜空里的电台")}</span>`;
   }
 }
 function tunerFromPointer(e) {
@@ -695,7 +743,7 @@ function storeVol() { try { localStorage.setItem(SAVE_KEY + "-vol", JSON.stringi
 try { const v = JSON.parse(localStorage.getItem(SAVE_KEY + "-vol")); if (v) A.setVolumes(v); } catch {}
 $("#btn-reset").addEventListener("click", (e) => {
   e.stopPropagation();
-  if (!confirm("确定要清空进度，重新开始这一天吗？")) return;
+  if (!confirm(T("确定要清空进度，重新开始这一天吗？"))) return;
   localStorage.removeItem(SAVE_KEY); location.reload();
 });
 $("#btn-full").addEventListener("click", (e) => { e.stopPropagation(); if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
@@ -733,12 +781,40 @@ stage.addEventListener("click", () => { if (holdPlaying) finishHold(); });
 
 // ---------------------------------------------------------------- 标题与结局
 
+// 首次加载：先把第一个场景需要的素材拉下来，按字节显示进度
+async function preloadFirstScene() {
+  const t = $("#title");
+  t.classList.add("loading");
+  const urls = [`assets/video/tianjing.mp4${V}`, `assets/scene/tianjing.webp${V}`, `assets/portrait/apo.png${V}`, `assets/portrait/xiaoman.png${V}`, `assets/item/radio.png${V}`];
+  const got = new Map(), size = new Map();
+  const paint = () => {
+    const total = [...size.values()].reduce((a, b) => a + b, 0) || 1;
+    const done = [...got.values()].reduce((a, b) => a + b, 0);
+    const p = Math.min(100, Math.round((done / total) * 100));
+    $("#t-load i").style.width = `${p}%`;
+    $("#t-load span").textContent = `${T("正在调频…")} ${p}%`;
+  };
+  const one = async (u) => {
+    try {
+      const r = await fetch(u);
+      size.set(u, Number(r.headers.get("content-length")) || 200000);
+      if (!r.body) { await r.arrayBuffer(); got.set(u, size.get(u)); paint(); return; }
+      const rd = r.body.getReader();
+      let n = 0;
+      for (;;) { const { done, value } = await rd.read(); if (done) break; n += value.length; got.set(u, n); paint(); }
+      got.set(u, size.get(u)); paint();
+    } catch { size.set(u, 1); got.set(u, 1); }
+  };
+  await Promise.race([Promise.all(urls.map(one)), wait(12000)]);
+  t.classList.remove("loading");
+}
+
 let started = false;
 function showTitle() {
   const t = $("#title");
   t.classList.add("show");
   $("#t-continue").hidden = !hasSave() || !Object.keys(S.visited).length;
-  $("#t-start").textContent = $("#t-continue").hidden ? "开始新的一天" : "重新开始";
+  $("#t-start").textContent = T($("#t-continue").hidden ? "开始新的一天" : "重新开始");
 }
 async function begin(resume) {
   A.initAudio();
@@ -770,28 +846,29 @@ async function playEnding() {
   const caption = async (txt, ms) => { cap.textContent = txt; cap.classList.add("show"); await wait(ms); cap.classList.remove("show"); await wait(600); };
   ev.src = `assets/video/moon.mp4${V}`; ev.className = "wide";
   ev.play().catch(() => {});
-  await caption("那天晚上，外婆的收音机，第一次唱了歌。", 2600);
+  await caption(T("那天晚上，外婆的收音机，第一次唱了歌。"), 2600);
   await new Promise((r) => { if (ev.ended) r(); ev.onended = r; setTimeout(r, 4000); });
   ev.src = `assets/video/sleep.mp4${V}`; ev.className = "square";
   ev.play().catch(() => {});
-  await caption("小满关了灯。窗外的上海，还在小声讲话。", 3000);
+  await caption(T("小满关了灯。窗外的上海，还在小声讲话。"), 3000);
   await new Promise((r) => { if (ev.ended) r(); ev.onended = r; setTimeout(r, 3000); });
-  await caption("晚安，上海。", 2200);
+  await caption(T("晚安，上海。"), 2200);
   showCredits();
 }
 
+const CREDITS = "原作视频《像素上海》· 海辛 Hyacinth<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · Mouse（Cursor Agent）<br>沪语 / 四川话 / 普通话配音 · Fun-CosyVoice3 本地合成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）";
 function showCredits() {
   const c = $("#credits");
   const mins = Math.max(1, Math.round((Date.now() - S.started) / 60000));
-  const quotes = CARD_IDS.filter(has).map((id) => `<li><b>${SPEAKERS[CARDS[id].who].name}</b>“${CARDS[id].quote}”</li>`).join("");
-  c.innerHTML = `<h2>像素上海：弄堂电台</h2>
-    <div class="stats"><div><b>${totalCount()}</b><span>段声音</span></div><div><b>${HU_CARDS.filter(has).length}</b><span>句上海话</span></div><div><b>${mins}</b><span>分钟</span></div></div>
+  const quotes = CARD_IDS.filter(has).map((id) => `<li><b>${tSpeaker(CARDS[id].who, SPEAKERS[CARDS[id].who].name)}</b>“${rich(tCard(id, CARDS[id], "quote"))}”</li>`).join("");
+  c.innerHTML = `<h2>${T("像素上海：弄堂电台")}</h2>
+    <div class="stats"><div><b>${totalCount()}</b><span>${T("段声音")}</span></div><div><b>${HU_CARDS.filter(has).length}</b><span>${T("句上海话")}</span></div><div><b>${mins}</b><span>${T("分钟")}</span></div></div>
     <div class="roll"><ul>${quotes}</ul></div>
-    <p class="thanks">原作视频《像素上海》· 海辛 Hyacinth<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · Mouse（Cursor Agent）<br>沪语 / 四川话 / 普通话配音 · Fun-CosyVoice3 本地合成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）</p>
-    <div class="cbtn"><button class="px-btn gold" id="c-card">生成我的上海明信片</button><button class="px-btn gold" id="c-more">继续寻找番外电台</button><button class="px-btn" id="c-title">回到标题</button></div>`;
+    <p class="thanks">${T(CREDITS)}</p>
+    <div class="cbtn"><button class="px-btn gold" id="c-card">${T("生成我的上海明信片")}</button><button class="px-btn gold" id="c-more">${T("继续寻找番外电台")}</button><button class="px-btn" id="c-title">${T("回到标题")}</button></div>`;
   c.classList.add("show");
   $("#c-card").onclick = (e) => { e.stopPropagation(); A.sfx("open"); showPostcard(); };
-  $("#c-more").onclick = async () => { c.classList.remove("show"); $("#ending").classList.remove("show"); app.classList.remove("ended"); $("#end-video").pause(); await travel("moon", { instant: true }); openTuner(); toast("试着把指针拨到 90.3、99.1 或 104.5"); };
+  $("#c-more").onclick = async () => { c.classList.remove("show"); $("#ending").classList.remove("show"); app.classList.remove("ended"); $("#end-video").pause(); await travel("moon", { instant: true }); openTuner(); toast(T("试着把指针拨到 90.3、99.1 或 104.5")); };
   $("#c-title").onclick = () => location.reload();
 }
 
@@ -799,6 +876,16 @@ function showCredits() {
 
 const loadImg = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
 function wrapText(g, text, maxW) {
+  if (/[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text)) {
+    const out = [];
+    let cur = "";
+    for (const w of text.split(/\s+/)) {
+      const next = cur ? `${cur} ${w}` : w;
+      if (g.measureText(next).width > maxW && cur) { out.push(cur); cur = w; } else cur = next;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
   const lines = [];
   let cur = "";
   for (const ch of text) {
@@ -809,7 +896,7 @@ function wrapText(g, text, maxW) {
   return lines;
 }
 async function makePostcard() {
-  const W = 1080, H = 1440, P = 12;
+  const W = 1080, H = 1560, P = 12;
   const cv = el("canvas"); cv.width = W; cv.height = H;
   const g = cv.getContext("2d");
   g.imageSmoothingEnabled = false;
@@ -838,42 +925,50 @@ async function makePostcard() {
   g.strokeStyle = "rgba(217,87,63,.9)"; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 112, 0, Math.PI * 2); g.stroke();
   g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 96, 0, Math.PI * 2); g.stroke();
   g.fillStyle = "rgba(217,87,63,.95)"; g.textAlign = "center"; g.font = "24px Px, sans-serif";
-  g.fillText("上海 · 弄堂电台", 0, -22); g.font = "40px Px, sans-serif"; g.fillText(`FM ${CARD_FREQ[pickId]}`, 0, 34);
+  if (isEN()) g.font = "15px Px, sans-serif";
+  g.fillText(T("上海 · 弄堂电台"), 0, -22); g.font = "40px Px, sans-serif"; g.fillText(`FM ${CARD_FREQ[pickId]}`, 0, 34);
   g.restore();
   // 标题与数据
   let y = fy0 + fh + 90;
-  g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "64px Px, sans-serif"; g.fillText("我的上海一天", 72, y);
-  g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.fillText(`${sc.time} · ${sc.name}`, 72, y + 52);
+  g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "64px Px, sans-serif"; g.fillText(T("我的上海一天"), 72, y);
+  g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.fillText(`${tScene(sc, "time")} · ${tScene(sc, "name")}`, 72, y + 52);
   y += 120;
-  const stats = [[totalCount(), "段声音"], [HU_CARDS.filter(has).length, "句上海话"], [Object.keys(S.visited).length, "个地方"]];
+  const stats = [[totalCount(), T("段声音")], [HU_CARDS.filter(has).length, T("句上海话")], [Object.keys(S.visited).length, T("个地方")]];
   stats.forEach(([n, label], k) => {
     const x = 72 + k * 320;
     g.fillStyle = "#231d35"; g.fillRect(x, y, 290, 120);
     g.fillStyle = "#f4c56b"; g.font = "60px Px, sans-serif"; g.fillText(String(n), x + 24, y + 76);
     const nw = g.measureText(String(n)).width;
-    g.fillStyle = "#f3e6c8"; g.font = "28px Px, sans-serif"; g.fillText(label, x + 36 + nw, y + 74);
+    g.fillStyle = "#f3e6c8"; g.font = isEN() ? "20px Px, sans-serif" : "28px Px, sans-serif";
+    wrapText(g, label, 290 - 48 - nw).slice(0, 2).forEach((ln, j, arr) => g.fillText(ln, x + 36 + nw, y + 74 - (arr.length - 1) * 13 + j * 26));
   });
   // 金句
   y += 200;
   g.fillStyle = "#d9573f"; g.font = "90px Px, sans-serif"; g.fillText("“", 60, y + 20);
-  g.fillStyle = "#231d35"; g.font = "44px Px, sans-serif";
-  const lines = wrapText(g, pick.quote, W - 260).slice(0, 4);
-  lines.forEach((ln, k) => g.fillText(ln, 130, y + k * 62));
-  y += lines.length * 62 + 10;
-  g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.textAlign = "right"; g.fillText(`—— ${SPEAKERS[pick.who].name}`, W - 90, y);
+  g.fillStyle = "#231d35";
+  // 金句区在数据格与页脚之间；按长度缩小字号，最多四行
+  const quote = plain(tCard(pickId, pick, "quote"));
+  let size = 44, lines;
+  for (size of [44, 40, 36, 32]) { g.font = `${size}px Px, sans-serif`; lines = wrapText(g, quote, W - 260); if (lines.length <= 3) break; }
+  lines = lines.slice(0, 4);
+  const lh = Math.round(size * 1.42);
+  lines.forEach((ln, k) => g.fillText(ln, 130, y + k * lh));
+  y += lines.length * lh - lh + 58;
+  g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.textAlign = "right"; g.fillText(`—— ${tSpeaker(pick.who, SPEAKERS[pick.who].name)}`, W - 90, y);
   // 小满
   const me = await loadImg(`assets/portrait/xiaoman.png${V}`);
-  if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 60, H - 346, 256, 256); }
-  g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText("像素上海：弄堂电台", 330, H - 210);
+  if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 60, H - 322, 256, 256); }
+  g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText(T("像素上海：弄堂电台"), 330, H - 190);
   g.fillStyle = "#8a5a3c"; g.font = "26px Px, sans-serif";
-  g.fillText("一台老收音机，一天，五十二段上海闲话", 330, H - 160);
-  g.fillText("ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 116);
+  g.fillText(T("一台老收音机，一天，五十二段上海闲话"), 330, H - 140);
+  g.fillText("ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 96);
   return cv;
 }
 async function showPostcard() {
   let box = $("#postcard");
   if (!box) {
-    box = el("div", "panel", `<div class="p-win small pc-win"><div class="p-head"><h2>明信片</h2><div>长按图片或点下载保存</div><button class="x" aria-label="关闭">✕</button></div><div class="pc-body"><img alt="我的上海明信片"></div><div class="row"><a class="px-btn gold" id="pc-dl" download="像素上海明信片.png">下载</a><button class="px-btn" id="pc-again">换一句</button></div></div>`);
+    box = el("div", "panel", `<div class="p-win small pc-win"><div class="p-head"><h2 data-i18n>明信片</h2><div data-i18n>长按图片或点下载保存</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div><div class="pc-body"><img alt="我的上海明信片" data-i18n-alt></div><div class="row"><a class="px-btn gold" id="pc-dl" download="${T("像素上海明信片.png")}" data-i18n>下载</a><button class="px-btn" id="pc-again" data-i18n>换一句</button></div></div>`);
+    applyStatic(box);
     box.id = "postcard";
     document.body.appendChild(box);
     box.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); box.classList.remove("open"); A.sfx("close"); });
@@ -888,18 +983,34 @@ async function showPostcard() {
 
 // ---------------------------------------------------------------- 启动
 
+// 语言：标题页与设置里的按钮；切换后刷新界面
+function syncLangButtons() { document.querySelectorAll(".lang-btn").forEach((b) => b.classList.toggle("on", b.dataset.lang === getLang())); }
+document.querySelectorAll(".lang-btn").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); A.initAudio(); A.sfx("click"); setLang(b.dataset.lang); }));
+onLang(() => {
+  syncLangButtons();
+  showTitle();
+  $("#t-load span").textContent = T("正在调频…");
+  if (current) { renderHUD(); renderHotspots(); }
+  if ($("#journal").classList.contains("open")) renderJournal();
+  if ($("#map").classList.contains("open")) { closeAllPanels(); openMap(); }
+});
+setLang(getLang());
+
 $("#tv").src = `assets/video/skyline.mp4${V}`;
 $("#tv").play().catch(() => {});
 document.fonts?.ready.then(() => app.classList.add("font-ready"));
 showTitle();
-addEventListener("visibilitychange", () => { if (document.hidden) { S.playMs += 0; save(); } });
+preloadFirstScene();
+addEventListener("visibilitychange", () => { if (document.hidden) save(); A.setPageHidden(document.hidden); });
+// 任意一次触摸都尝试恢复音频（微信 / 微博内置浏览器切回前台后常被挂起）
+addEventListener("pointerdown", () => A.initAudio(), { capture: true, passive: true });
 
 // 调试与自动化测试入口
 window.__game = {
   state: () => S, travel, cards: CARD_IDS, scenes: SCENES.map((s) => s.id), setListen, openMap, openJournal, openTuner,
   interact: (id) => interact(current.hotspots.find((h) => h.id === id)), current: () => current?.id, busy: () => busy || holdPlaying || entering,
   dialogOpen: () => dialogOpen, advance: () => advance && advance(), choose: (n) => choiceKeys && choiceKeys(n),
-  tune: (f) => { tuner.f = f; updateTuner(); }, mainCount, totalCount,
+  tune: (f) => { tuner.f = f; updateTuner(); }, mainCount, totalCount, setLang,
   postcard: async () => (await makePostcard()).toDataURL("image/png"),
   defineSong: (name, def, tune) => { if (tune) A.registerTunes([tune]); A.defineSong(name, def); },
   renderMusic: async (name, sec) => {

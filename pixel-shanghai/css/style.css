@@ -350,6 +350,22 @@ kbd { font-family: inherit; background: var(--panel2); padding: 0 .35em; box-sha
 @keyframes neon { 0%, 72%, 76%, 100% { opacity: 1; } 74% { opacity: .35; } }
 .t-line { margin: 0; color: var(--cream); text-shadow: 0 2px 0 var(--ink); letter-spacing: .1em; }
 .t-btns { display: flex; gap: .8em; margin-top: .9em; }
+.t-lang { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 14px; display: flex; gap: 2px; z-index: 3; }
+.t-lang .lang-btn { background: rgba(18, 15, 28, .7); border: 0; color: var(--dim); font: inherit; font-size: .8em; padding: .3em .7em; box-shadow: 0 0 0 2px var(--line); cursor: pointer; }
+.lang-btn.on { color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.lang-row { display: flex; align-items: center; gap: .5em; margin-bottom: .4em; }
+.lang-row span { min-width: 4em; }
+.lang-row .lang-btn { font-size: .85em; padding: .25em .8em; }
+em.rom { font-style: normal; color: #ffcf9e; }
+.quote-zh { color: var(--dim); font-size: .78em; margin: .2em 0 0; }
+#dialog.en #d-text { line-height: 1.45; word-break: normal; overflow-wrap: anywhere; }
+#scenecard.en .sc-name { letter-spacing: .06em; font-size: 2.4em; }
+#scenecard.en .sc-weather { letter-spacing: .12em; }
+#t-load { display: none; flex-direction: column; align-items: center; gap: .5em; margin: 1em 0 .4em; font-size: .85em; color: var(--cream); }
+#t-load .bar { width: 14em; height: .9em; background: var(--ink); box-shadow: 0 0 0 var(--px) var(--cream); padding: 2px; }
+#t-load .bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, var(--gold) 0 6px, #d9a53b 6px 8px); transition: width .2s steps(4); }
+#title.loading #t-load { display: flex; }
+#title.loading .t-btns { display: none; }
 .t-tip { color: var(--dim); font-size: .7em; max-width: 34em; line-height: 1.6; text-shadow: 0 2px 0 var(--ink); margin-top: .8em; }
 .t-foot { position: absolute; bottom: 1.2em; left: 0; right: 0; text-align: center; font-size: 12px; color: rgba(245, 232, 200, .55); }
 
@@ -384,11 +400,24 @@ kbd { font-family: inherit; background: var(--panel2); padding: 0 .35em; box-sha
 
 .portrait #dialog { left: 8px; width: calc(100vw - 16px); top: calc(var(--st) + var(--sh) + 10px); height: auto; min-height: 28vh; max-height: calc(100vh - var(--st) - var(--sh) - 20px); grid-template-columns: 32vw 1fr; }
 .portrait #d-portrait { height: auto; width: 32vw; }
+.portrait #stage { touch-action: pan-y; }
+.portrait #layer { inset: auto; left: 0; top: 0; width: var(--lw); height: 100%; transform-origin: 0 0; }
+#pan-hint { display: none; }
+.portrait #pan-hint { display: block; inset: 0; pointer-events: none; z-index: 4; }
+#pan-hint i { position: absolute; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--cream); font-size: 1.2em; opacity: 0; transition: opacity .3s; text-shadow: 0 2px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink); animation: panhint 1.2s steps(2) infinite; }
+#pan-hint i:first-child { left: 6px; }
+#pan-hint i:last-child { right: 6px; }
+#pan-hint.l i:first-child, #pan-hint.r i:last-child { opacity: .9; }
+#pan-hint.used.l i:first-child, #pan-hint.used.r i:last-child { opacity: .35; animation: none; }
+.talking #pan-hint i { opacity: 0 !important; }
+@keyframes panhint { 50% { margin-left: 3px; margin-right: 3px; } }
 .portrait #tools { position: fixed; right: 8px; bottom: max(10px, env(safe-area-inset-bottom)); }
 .portrait #inv { position: fixed; left: 8px; bottom: max(10px, env(safe-area-inset-bottom)); }
 .portrait #next { position: fixed; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 4.2em); }
 .portrait.talking #tools, .portrait.talking #inv, .portrait.talking #next { opacity: 0; pointer-events: none; }
-.portrait #chip { font-size: .8em; }
+.portrait #chip { font-size: .8em; max-width: calc(100% - 11.5em); overflow: hidden; }
+.portrait #chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.portrait #chip i { display: none; }
 .portrait #counter .dial { display: none; }
 .portrait #counter { font-size: .8em; }
 .portrait #scene-left { position: fixed; top: calc(var(--st) + var(--sh) + 12px); left: 12px; font-size: .9em; }

@@ -13,31 +13,32 @@
 <meta name="theme-color" content="#0d0b18">
 <link rel="icon" href="assets/item/radio.png">
 <link rel="preload" href="assets/font/fusion-pixel-zh.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=20260924b">
+<link rel="stylesheet" href="css/style.css?v=20260925">
 </head>
 <body>
 <div id="app">
   <div id="stage">
     <div id="layer">
-      <video id="bgv" muted playsinline preload="auto"></video>
+      <video id="bgv" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" preload="auto"></video>
       <img id="still" alt="">
       <canvas id="fx"></canvas>
       <div id="hotspots"></div>
     </div>
     <div class="grain"></div>
+    <div id="pan-hint" class="hud" aria-hidden="true"><i>◀</i><i>▶</i></div>
     <div id="chip" class="hud"></div>
     <div id="counter" class="hud"></div>
     <div id="scene-left" class="hud"></div>
     <div id="inv" class="hud"></div>
     <div id="tools" class="hud">
-      <button id="btn-listen" class="tool" title="收听模式（空格）"><i class="ico ear"></i><span>收听</span></button>
-      <button id="btn-tuner" class="tool" title="调频（T）"><i class="ico dial"></i><span>调频</span></button>
-      <button id="btn-map" class="tool" title="地图（M）"><i class="ico map"></i><span>地图</span></button>
-      <button id="btn-journal" class="tool" title="收集簿（J）"><i class="ico book"></i><span>收集簿</span></button>
-      <button id="btn-settings" class="tool small" title="设置"><i class="ico gear"></i></button>
+      <button id="btn-listen" class="tool" title="收听模式（空格）" data-i18n-title><i class="ico ear"></i><span data-i18n>收听</span></button>
+      <button id="btn-tuner" class="tool" title="调频（T）" data-i18n-title><i class="ico dial"></i><span data-i18n>调频</span></button>
+      <button id="btn-map" class="tool" title="地图（M）" data-i18n-title><i class="ico map"></i><span data-i18n>地图</span></button>
+      <button id="btn-journal" class="tool" title="收集簿（J）" data-i18n-title><i class="ico book"></i><span data-i18n>收集簿</span></button>
+      <button id="btn-settings" class="tool small" title="设置" data-i18n-title><i class="ico gear"></i></button>
     </div>
     <button id="next" class="hud" hidden></button>
-    <button id="skip" class="hud" hidden>跳过 ▸▸</button>
+    <button id="skip" class="hud" hidden data-i18n>跳过 ▸▸</button>
     <div id="scenecard"></div>
     <div id="toast"></div>
     <canvas id="wipe"></canvas>
@@ -57,8 +58,8 @@
 
   <div id="journal" class="panel">
     <div class="p-win">
-      <div class="p-head"><h2>声音收集簿</h2><div id="j-stats"></div><button class="x" aria-label="关闭">✕</button></div>
-      <div class="tabs"><button class="tab on" data-tab="cards">声音卡</button><button class="tab" data-tab="hu">沪语小词典</button><button class="tab" data-tab="items">道具</button></div>
+      <div class="p-head"><h2 data-i18n>声音收集簿</h2><div id="j-stats"></div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div>
+      <div class="tabs"><button class="tab on" data-tab="cards" data-i18n>声音卡</button><button class="tab" data-tab="hu" data-i18n>沪语小词典</button><button class="tab" data-tab="items" data-i18n>道具</button></div>
       <div id="j-body" class="p-body"></div>
       <div id="j-detail"></div>
     </div>
@@ -66,9 +67,9 @@
 
   <div id="map" class="panel">
     <div class="p-win wide">
-      <div class="p-head"><h2>上海 · 一天</h2><div id="map-progress"></div><button class="x" aria-label="关闭">✕</button></div>
+      <div class="p-head"><h2 data-i18n>上海 · 一天</h2><div id="map-progress"></div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div>
       <div class="map-wrap">
-        <img src="assets/scene/map.webp" alt="像素上海地图">
+        <img src="assets/scene/map.png?v=20260925" alt="像素上海地图" data-i18n-alt>
         <svg id="map-route" viewBox="0 0 100 56.25" preserveAspectRatio="none"></svg>
         <div id="map-pins"></div>
       </div>
@@ -79,7 +80,7 @@
 
   <div id="tuner" class="panel">
     <div class="p-win radio-win">
-      <div class="p-head"><h2>调频</h2><div class="sub">外婆的收音机 · FM</div><button class="x" aria-label="关闭">✕</button></div>
+      <div class="p-head"><h2 data-i18n>调频</h2><div class="sub" data-i18n>外婆的收音机 · FM</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div>
       <div class="radio-body">
         <div class="grille"></div>
         <div class="radio-face">
@@ -87,7 +88,7 @@
           <div id="t-dial"><div id="t-scale"></div><div id="t-needle"></div></div>
           <div class="t-row">
             <button id="t-left" class="px-btn">◀</button>
-            <div id="t-knob" title="滚轮微调"></div>
+            <div id="t-knob" title="滚轮微调" data-i18n-title></div>
             <button id="t-right" class="px-btn">▶</button>
             <div id="t-meter"><i></i><i></i><i></i><i></i><i></i><i></i></div>
           </div>
@@ -99,45 +100,48 @@
 
   <div id="settings" class="panel">
     <div class="p-win small">
-      <div class="p-head"><h2>设置</h2><button class="x" aria-label="关闭">✕</button></div>
+      <div class="p-head"><h2 data-i18n>设置</h2><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div>
       <div class="p-body set">
-        <label>配音<input id="vol-voice" type="range" min="0" max="1" step="0.05"></label>
-        <label>音乐<input id="vol-music" type="range" min="0" max="1" step="0.05"></label>
-        <label>音效<input id="vol-sfx" type="range" min="0" max="1" step="0.05"></label>
+        <div class="lang-row"><span data-i18n>语言</span><button class="px-btn lang-btn" data-lang="zh">中文</button><button class="px-btn lang-btn" data-lang="en">English</button></div>
+        <label><span data-i18n>配音</span><input id="vol-voice" type="range" min="0" max="1" step="0.05"></label>
+        <label><span data-i18n>音乐</span><input id="vol-music" type="range" min="0" max="1" step="0.05"></label>
+        <label><span data-i18n>音效</span><input id="vol-sfx" type="range" min="0" max="1" step="0.05"></label>
         <div class="keys">
-          <p><kbd>空格</kbd> 继续对话 / 收听模式</p>
-          <p><kbd>M</kbd> 地图 <kbd>J</kbd> 收集簿 <kbd>T</kbd> 调频</p>
-          <p><kbd>1</kbd><kbd>2</kbd> 选择回答 <kbd>Esc</kbd> 关闭</p>
+          <p data-i18n-html><kbd>空格</kbd> 继续对话 / 收听模式</p>
+          <p data-i18n-html><kbd>M</kbd> 地图 <kbd>J</kbd> 收集簿 <kbd>T</kbd> 调频</p>
+          <p data-i18n-html><kbd>1</kbd><kbd>2</kbd> 选择回答 <kbd>Esc</kbd> 关闭</p>
         </div>
-        <div class="row"><button id="btn-full" class="px-btn">全屏</button><button id="btn-reset" class="px-btn red">清空进度</button></div>
+        <div class="row"><button id="btn-full" class="px-btn" data-i18n>全屏</button><button id="btn-reset" class="px-btn red" data-i18n>清空进度</button></div>
       </div>
     </div>
   </div>
 
   <div id="title">
-    <video id="tv" muted playsinline loop></video>
+    <video id="tv" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" loop></video>
     <div class="t-shade"></div>
     <div class="t-box">
       <div class="t-kicker">PIXEL SHANGHAI · LANE RADIO</div>
       <h1>像素上海</h1>
       <div class="t-sign"><span>弄</span><span>堂</span><span>电</span><span>台</span></div>
-      <p class="t-line">一台老收音机 · 一天 · 五十二段上海闲话</p>
+      <p class="t-line" data-i18n>一台老收音机 · 一天 · 五十二段上海闲话</p>
+      <div id="t-load"><div class="bar"><i></i></div><span>正在调频…</span></div>
       <div class="t-btns">
         <button id="t-start" class="px-btn gold big">开始新的一天</button>
-        <button id="t-continue" class="px-btn big" hidden>继续</button>
+        <button id="t-continue" class="px-btn big" hidden data-i18n>继续</button>
       </div>
-      <p class="t-tip">🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音</p>
+      <p class="t-tip" data-i18n-html>🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音</p>
     </div>
-    <div class="t-foot">原作视频《像素上海》海辛 Hyacinth · 游戏制作 Mouse</div>
+    <div class="t-foot" data-i18n>原作视频《像素上海》海辛 Hyacinth · 游戏制作 Mouse</div>
+    <div class="t-lang"><button class="lang-btn" data-lang="zh">中文</button><button class="lang-btn" data-lang="en">EN</button></div>
   </div>
 
   <div id="ending">
-    <video id="end-video" muted playsinline></video>
+    <video id="end-video" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page"></video>
     <div id="end-cap"></div>
     <div id="credits"></div>
   </div>
 </div>
 <noscript>这个小游戏需要开启 JavaScript。</noscript>
-<script type="module" src="js/main.js?v=20260924b"></script>
+<script type="module" src="js/main.js?v=20260925"></script>
 </body>
 </html>
