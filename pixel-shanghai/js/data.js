@@ -21,6 +21,16 @@ export const SPEAKERS = {
   auntie: { name: "天台阿姨", portrait: "auntie", voice: 1.0, wave: "#86d0c9" },
   kid: { name: "小胖", portrait: "kid", voice: 1.45, wave: "#8fb3ff" },
   moonman: { name: "夜归人", portrait: "moonman", voice: 0.86, wave: "#b9c6ff" },
+  dancepa: { name: "跳舞的爷叔", portrait: "dancepa", voice: 0.8, wave: "#f2c38c" },
+  chessman: { name: "下棋的老先生", portrait: "chessman", voice: 0.72, wave: "#c9d6a0" },
+  chef: { name: "小笼包师傅", portrait: "chef", voice: 0.85, wave: "#ffe0a8" },
+  actress: { name: "背台词的演员", portrait: "actress", voice: 1.1, wave: "#f5a3b8" },
+  haixin: { name: "海辛", portrait: null, voice: 1.12, wave: "#ffb3d1" },
+  awen: { name: "阿文", portrait: null, voice: 0.9, wave: "#9fd0ff" },
+  runner: { name: "跑步的姑娘", portrait: "runner", voice: 1.12, wave: "#ffb38a" },
+  fisher: { name: "钓鱼的老伯", portrait: "fisher", voice: 0.72, wave: "#a8c8d8" },
+  tramdriver: { name: "铛铛车司机", portrait: "tramdriver", voice: 0.85, wave: "#ffcf6b" },
+  shopauntie: { name: "老字号的阿姨", portrait: "shopauntie", voice: 1.0, wave: "#e8a8c8" },
   waipo: { name: "外婆", portrait: "waipo", voice: 0.95, wave: "#ffd08a" },
   radio: { name: "收音机", portrait: null, voice: 1.3, wave: "#ffb347" },
   signal: { name: "电波里的声音", portrait: null, voice: 1.0, wave: "#7ee0c3" },
@@ -55,6 +65,11 @@ export const CARDS = {
   C2: { title: "困觉", who: "amia", quote: "喵呜——（打了一个很长的哈欠，继续困觉）", hu: ["困觉", "kun gao", "睡觉"] },
   C3: { title: "停在1999", who: "li", quote: "挂历是我老太婆最后一年撕的。伊走了以后，我就勿舍得再翻。", kind: "thing" },
   C4: { title: "雪花屏", who: "li", quote: "老电视没信号，沙沙沙，像落雪。阿拉小辰光就看这种雪。", kind: "thing", hidden: true },
+  // 复兴公园
+  P1: { title: "爷叔", who: "dancepa", quote: "叫我爷叔好了。公园里的人，都叫我爷叔。", hu: ["爷叔", "ya soh", "对年长男子的亲切称呼"] },
+  P2: { title: "等一步棋", who: "chessman", quote: "这步棋我想了三天。老对手上礼拜搬到浦东去了，我还在等伊回来走下一步。" },
+  P3: { title: "两台收音机", who: "me", quote: "长椅上有一台别人的收音机在放沪剧。两台收音机隔着一条小路，好像在打招呼。", kind: "thing" },
+  P4: { title: "画眉", who: "signal", quote: "伊叫得比我唱得好。每天早上带伊出来，听听人家的鸟。", kind: "thing", hidden: true },
   // 梧桐
   D1: { title: "空中高速", who: "squirrel", quote: "吱！这根电线是我修的高速公路，勿收过路费。", kind: "thing" },
   D2: { title: "老克勒", who: "zhou", quote: "衣裳要挺括，讲闲话要轻，吃咖啡要慢慢叫——这就是老克勒。", hu: ["老克勒", "lao ke leh", "讲究体面、懂生活的老派绅士"], freq: "90.3" },
@@ -65,14 +80,34 @@ export const CARDS = {
   E2: { title: "老早", who: "walker", quote: "我从小在外滩看船。老早是看船来，现在是看人来。", hu: ["老早", "lao zao", "以前、很久以前"] },
   E3: { title: "对表", who: "me", quote: "外滩的钟一敲，半个上海都抬头对一对表。", kind: "thing" },
   E4: { title: "最低的一个音", who: "signal", quote: "呜——黄浦江的汽笛，是上海最低的一个音。", kind: "thing", hidden: true },
+  // 城隍庙
+  Q1: { title: "小笼馒头", who: "tourist", quote: "上海人把小笼包叫“小笼馒头”。馒头！里头有肉的馒头！", hu: ["小笼馒头", "xiao long moe deu", "小笼包"] },
+  Q2: { title: "先开窗，后喝汤", who: "chef", quote: "吃小笼有口诀：轻轻提，慢慢移，先开窗，后喝汤。" },
+  Q3: { title: "九曲桥", who: "me", quote: "九曲桥拐了九道弯。老人讲，不好的东西只会走直路，跟不上来。", kind: "thing" },
+  Q4: { title: "湖心亭", who: "signal", quote: "茶要慢慢叫吃，书要慢慢叫听。", kind: "thing", hidden: true },
   // 老码头
   F1: { title: "结棍", who: "aqiang", quote: "我阿爷在码头扛包，我爸开轮渡，我在码头边卖奶茶——一代比一代轻松，结棍伐？", hu: ["结棍", "jih gun", "厉害、了不起"] },
   F2: { title: "慢一眼眼", who: "aqiang", quote: "这只钟一直慢三分钟。码头上的人讲，慢一眼眼，好等等来晚的人。", hu: ["一眼眼", "yih nge nge", "一点点"], kind: "thing" },
   F3: { title: "吊钩上的星", who: "signal", quote: "星星是码头工人的小囡挂上去的，讲夜里爸爸下班，抬头就看得见。", kind: "thing", hidden: true },
+  // 安福路
+  R1: { title: "心别别跳", who: "actress", quote: "今朝夜里第一场，我心别别跳。", hu: ["心别别跳", "sin bih bih diao", "紧张得心怦怦跳"] },
+  R2: { title: "拍片的人", who: "haixin", quote: "上海最好看的，不是楼，是走在路上的人。" },
+  R3: { title: "三个看门的", who: "me", quote: "花店、旧书店、咖啡店，门口都趴着一条狗，像三个看门的店员。", kind: "thing" },
+  R4: { title: "开场前五分钟", who: "me", quote: "门里有人喊：五分钟后开场！掌声隔着门，像下雨。", kind: "thing", hidden: true },
+  // 苏州河
+  S1: { title: "一页一页", who: "runner", quote: "一座座桥跑过去，就像把上海翻一页一页。" },
+  S2: { title: "夜快头", who: "fisher", quote: "夜快头，就是太阳落山前头那一歇。上海最好看的辰光。", hu: ["夜快头", "ya kua deu", "傍晚"] },
+  S3: { title: "桥连着桥", who: "me", quote: "一座桥接着一座桥，每座桥下面，都有一只慢慢开的船。", kind: "thing" },
+  S4: { title: "一、二！", who: "signal", quote: "桨要齐！心要齐！船就跑得快！", kind: "thing", hidden: true },
   // 酒馆
   G1: { title: "吃老酒", who: "boss", quote: "上海人白天吃咖啡讲道理，夜到吃老酒讲心事。", hu: ["吃老酒", "qih lao jiu", "喝酒"] },
   G2: { title: "轧闹猛", who: "guests", quote: "今朝礼拜五，全上海的人都出来轧闹猛了！", hu: ["轧闹猛", "ga nao mang", "凑热闹"] },
   G3: { title: "蓬嚓嚓", who: "signal", quote: "门里的留声机在放一支老爵士。老板讲，老早百乐门也放过。", kind: "thing", hidden: true, freq: "90.3" },
+  // 南京路
+  T1: { title: "叮叮当当", who: "tramdriver", quote: "我阿爷开有轨电车，我开观光车。车子换了，铃声还是这只。" },
+  T2: { title: "一歇歇", who: "shopauntie", quote: "排队的人，一大半都是帮屋里人排的。等一歇歇，马上就好。", hu: ["一歇歇", "yih xih xih", "一会儿"] },
+  T3: { title: "首饰盒", who: "me", quote: "霓虹招牌一亮，整条街像一只打开的首饰盒。", kind: "thing" },
+  T4: { title: "营业到十点", who: "signal", quote: "顾客朋友们，本店营业到夜里十点钟，欢迎慢慢叫看。", kind: "thing", hidden: true },
   // 陆家嘴
   H1: { title: "谢谢侬", who: "rider", quote: "来上海七年，上海话只会一句“谢谢侬”——因为每天听到最多的就是这句。", hu: ["谢谢侬", "xia xia nong", "谢谢你"] },
   H2: { title: "屋顶上的明珠", who: "me", quote: "外婆讲，明珠造好那年，弄堂里的人都爬到屋顶上看。", kind: "thing" },
@@ -82,6 +117,7 @@ export const CARDS = {
   I2: { title: "一把伞", who: "signal", quote: "落雨天，一把伞，两个人，就会走得慢一点。" },
   I3: { title: "红灯", who: "me", quote: "滴、滴、滴——上海的红绿灯，等人等得老有耐心。", kind: "thing", hidden: true },
   I4: { title: "两个上海", who: "me", quote: "落过雨，上海就有两个：一个在天上，一个在脚底下。", kind: "thing", hidden: true },
+  I5: { title: "第八把伞", who: "barista", quote: "那……第八把，我不借了。我送你回去。" },
   // 书摊
   J1: { title: "夜里十点", who: "aning", quote: "阿爷讲，书摊要摆到夜里十点，因为总有人下班晚。" },
   J2: { title: "小人书", who: "aning", quote: "老早一分洋钿看一本，坐在小矮凳上，一直看到天黑。", kind: "thing" },
@@ -300,6 +336,48 @@ export const SCENES = [
     ]
   },
   {
+    id: "fuxing", name: "复兴公园", music: "dusk", time: "09:50", weather: "晴 · 薄雾", mood: "morning", amb: "birds", fx: "sunleaves", mode: "loop", need: 2,
+    intro: [S("me", "收音机修好了，路过复兴公园。音乐声从梧桐树后面飘出来。")],
+    hotspots: [
+      { id: "dancepa", x: 20, y: 32, w: 17, h: 54, label: "跳舞的爷叔", verb: "交谈", talk: [
+        { when: "!card:P1", do: [
+          S("dancepa", "小姑娘，一道来跳伐？三步四步，交关便当。"),
+          { choice: [
+            ["我不会跳……", [S("dancepa", "勿要紧，跟牢我的脚，一二三，一二三。")]],
+            ["我在找声音。", [S("dancepa", "声音？侬听，这支音乐，阿拉跳了三十年了。")]]
+          ] },
+          S("dancepa", "叫我爷叔好了。公园里的人，都叫我爷叔。"),
+          { card: "P1" }
+        ] },
+        { do: [S("dancepa", "一二三，一二三……转！")] }
+      ] },
+      { id: "chess", x: 60, y: 42, w: 22, h: 36, label: "下棋的老先生", verb: "交谈", talk: [
+        { when: "!card:P2", do: [
+          S("chessman", "嘘——观棋勿语。"),
+          S("me", "他盯着棋盘，半天没动。对面的凳子空着。"),
+          S("chessman", "这步棋我想了三天。老对手上礼拜搬到浦东去了，我还在等伊回来走下一步。"),
+          { card: "P2" }
+        ] },
+        { do: [S("chessman", "伊讲礼拜天回来。棋我帮伊摆好了。")] }
+      ] },
+      { id: "bench", x: 66, y: 79, w: 30, h: 19, label: "长椅上的收音机", verb: "聆听", talk: [
+        { when: "!card:P3", do: [
+          S("radio", "……（咿咿呀呀的沪剧）"),
+          S("me", "长椅上有一台别人的收音机在放沪剧。两台收音机隔着一条小路，好像在打招呼。"),
+          { card: "P3" }
+        ] },
+        { do: [S("me", "它的主人大概去跳舞了。")] }
+      ] },
+      { id: "birdcage", x: 7, y: 12, w: 10, h: 24, label: "鸟笼", verb: "聆听", hidden: true, talk: [
+        { do: [
+          S("radio", "啾啾——啾——"),
+          S("signal", "伊叫得比我唱得好。每天早上带伊出来，听听人家的鸟。"),
+          { card: "P4" }
+        ] }
+      ] }
+    ]
+  },
+  {
     id: "wutong", name: "梧桐马路", time: "10:20", weather: "晴 · 树影", mood: "noon", amb: "birds", fx: "sunleaves", mode: "loop", need: 2,
     intro: [S("me", "拐进一条梧桐马路。红砖楼的转角，树影一格一格落在墙上。"), S("radio", "……吱吱……吱？")],
     hotspots: [
@@ -394,6 +472,45 @@ export const SCENES = [
     ]
   },
   {
+    id: "yuyuan", name: "城隍庙", music: "t_zizhu", time: "12:50", weather: "晴", mood: "noon", amb: "street", fx: "steam", mode: "loop", need: 2,
+    intro: [S("me", "九曲桥上人挤人。空气里全是小笼包和梨膏糖的味道。")],
+    hotspots: [
+      { id: "tourist2", x: 26, y: 30, w: 16, h: 54, label: "成都来的阿哥", verb: "交谈", talk: [
+        { when: "!card:Q1", do: [
+          S("tourist", "哎！又是你嘛！上海好小哦，又遇到了！"),
+          S("tourist", "小笼包排了四十分钟队，巴适惨了！"),
+          S("tourist", "上海人把小笼包叫“小笼馒头”。馒头！里头有肉的馒头！"),
+          { card: "Q1" }
+        ] },
+        { do: [S("tourist", "明天回成都了。“侬好”和“小笼馒头”，我都带回去！")] }
+      ] },
+      { id: "chef", x: 0, y: 53, w: 24, h: 47, label: "小笼包师傅", verb: "交谈", talk: [
+        { when: "!card:Q2", do: [
+          S("chef", "一只小笼十八个褶子，少一个都勿来事。"),
+          S("chef", "吃小笼有口诀：轻轻提，慢慢移，先开窗，后喝汤。"),
+          S("me", "先开窗……后喝汤。"),
+          S("chef", "对！烫着嘴巴的人，都是心急的。"),
+          { card: "Q2" }
+        ] },
+        { do: [S("chef", "蒸笼一掀，香气就是招牌。")] }
+      ] },
+      { id: "bridge", x: 46, y: 42, w: 34, h: 32, label: "九曲桥", verb: "查看", talk: [
+        { when: "!card:Q3", do: [
+          S("me", "九曲桥拐了九道弯。老人讲，不好的东西只会走直路，跟不上来。"),
+          { card: "Q3" }
+        ] },
+        { do: [S("me", "桥下的锦鲤，排着队等人丢面包。")] }
+      ] },
+      { id: "teahouse", x: 62, y: 2, w: 33, h: 36, label: "湖心亭", verb: "聆听", hidden: true, talk: [
+        { do: [
+          S("radio", "……叮叮咚咚（琵琶声）"),
+          S("signal", "茶要慢慢叫吃，书要慢慢叫听。"),
+          { card: "Q4" }
+        ] }
+      ] }
+    ]
+  },
+  {
     id: "riverroad", name: "老码头", time: "14:30", weather: "晴 · 江风", mood: "noon", amb: "dock", fx: "gulls", mode: "hold", need: 2,
     intro: [S("me", "顺着江往南走，是一段老码头。钟楼、木箱、黄色的吊车，还有一个在看报纸的人。")],
     hotspots: [
@@ -435,6 +552,85 @@ export const SCENES = [
     ]
   },
   {
+    id: "anfu", name: "安福路", time: "15:40", weather: "晴 · 梧桐影", mood: "noon", amb: "street", fx: "sunleaves", mode: "loop", need: 2,
+    intro: [S("me", "安福路窄窄的，梧桐叶把阳光剪成一块一块。")],
+    hotspots: [
+      { id: "actress", x: 18, y: 55, w: 10, h: 36, label: "背台词的演员", verb: "交谈", talk: [
+        { when: "!card:R1", do: [
+          S("actress", "（小声）……“侬晓得伐，我等侬等了一辈子”……哎呀，又忘记了。"),
+          S("actress", "今朝夜里第一场，我心别别跳。"),
+          S("actress", "心别别跳，就是紧张得心跳得老快老快。"),
+          { card: "R1" }
+        ] },
+        { do: [S("actress", "等一歇来看戏伐？我帮侬留个位子。")] }
+      ] },
+      { id: "makers", x: 38, y: 44, w: 20, h: 46, label: "拍片的两个人", verb: "交谈", talk: [
+        { when: "!card:R2", do: [
+          S("haixin", "哎，你的收音机好好看！可以借我们拍一个镜头吗？"),
+          S("awen", "我们在拍一部关于上海的短片。"),
+          S("haixin", "上海最好看的，不是楼，是走在路上的人。"),
+          S("awen", "还有他们讲的话。"),
+          S("me", "我把收音机举起来。取景器里，指针在发光。"),
+          { card: "R2" }
+        ] },
+        { do: [S("awen", "拍好了！等片子剪出来，你就在里面。")] }
+      ] },
+      { id: "shops", x: 62, y: 30, w: 38, h: 55, label: "街边小店", verb: "查看", talk: [
+        { when: "!card:R3", do: [
+          S("me", "花店、旧书店、咖啡店，门口都趴着一条狗，像三个看门的店员。"),
+          { card: "R3" }
+        ] },
+        { do: [S("me", "三条狗同时打了个哈欠。")] }
+      ] },
+      { id: "theatre", x: 7, y: 38, w: 11, h: 55, label: "剧场的门", verb: "聆听", hidden: true, talk: [
+        { do: [
+          S("radio", "……（隔着门的掌声）"),
+          S("signal", "五分钟后开场，请各位演员就位！"),
+          S("me", "门里的掌声，像下雨。"),
+          { card: "R4" }
+        ] }
+      ] }
+    ]
+  },
+  {
+    id: "suzhou", name: "苏州河边", music: "t_suzhou", time: "17:10", weather: "晴 · 晚霞", mood: "dusk", amb: "river", fx: "gulls", mode: "loop", need: 2,
+    intro: [S("me", "苏州河的步道上，夕阳把河水染成橘子汽水的颜色。")],
+    hotspots: [
+      { id: "runner", x: 14, y: 41, w: 12, h: 40, label: "跑步的姑娘", verb: "交谈", talk: [
+        { when: "!card:S1", do: [
+          S("runner", "步道通了以后，我每天下班沿着苏州河跑五公里。"),
+          S("runner", "从这里跑到外白渡桥，看一眼黄浦江，再跑回来。"),
+          S("runner", "一座座桥跑过去，就像把上海翻一页一页。"),
+          { card: "S1" }
+        ] },
+        { do: [S("runner", "夜快头的风最适意。侬也来跑伐？")] }
+      ] },
+      { id: "fisher", x: 60, y: 58, w: 20, h: 39, label: "钓鱼的老伯", verb: "交谈", talk: [
+        { when: "!card:S2", do: [
+          S("fisher", "老早苏州河是黑的，鱼都没了。现在侬看，有鱼了。"),
+          S("fisher", "我钓鱼勿是为了鱼，是为了等夜快头。"),
+          S("fisher", "夜快头，就是太阳落山前头那一歇。上海最好看的辰光。"),
+          { card: "S2" }
+        ] },
+        { do: [S("fisher", "钓着了，就放伊回去。明朝再来看伊。")] }
+      ] },
+      { id: "bridges", x: 2, y: 22, w: 28, h: 14, label: "远处的桥", verb: "查看", talk: [
+        { when: "!card:S3", do: [
+          S("me", "一座桥接着一座桥，每座桥下面，都有一只慢慢开的船。"),
+          { card: "S3" }
+        ] },
+        { do: [S("me", "晚霞一点一点沉到桥下面去了。")] }
+      ] },
+      { id: "rowers", x: 49, y: 43, w: 31, h: 15, label: "划船的人", verb: "聆听", hidden: true, talk: [
+        { do: [
+          S("radio", "……一、二！一、二！"),
+          S("signal", "桨要齐！心要齐！船就跑得快！"),
+          { card: "S4" }
+        ] }
+      ] }
+    ]
+  },
+  {
     id: "tavern", name: "老洋房酒馆", time: "18:10", weather: "晚霞", mood: "dusk", amb: "bar", fx: "fireflies", mode: "hold", need: 2,
     intro: [S("me", "天慢慢暗下来。爬满藤蔓的老洋房里，灯一盏一盏亮了。")],
     hotspots: [
@@ -468,6 +664,44 @@ export const SCENES = [
           S("boss", "侬也听见了？里面那台留声机，在放一支老爵士。"),
           S("boss", "老早百乐门也放过这支。有人讲，频率拨到 90.3，还能听到当年的舞池。"),
           { card: "G3" }
+        ] }
+      ] }
+    ]
+  },
+  {
+    id: "nanjing", name: "南京路", music: "jazz", time: "19:00", weather: "晴 · 霓虹", mood: "night", amb: "city", fx: "sparkle", mode: "loop", need: 2,
+    intro: [S("me", "南京路的灯一下子全亮了。人潮像一条会发光的河。")],
+    hotspots: [
+      { id: "tram", x: 22, y: 50, w: 30, h: 42, label: "铛铛车", verb: "交谈", talk: [
+        { when: "!card:T1", do: [
+          { sfx: "ring" },
+          S("tramdriver", "上车伐？铛铛车，叮叮当当，老上海的声音。"),
+          S("tramdriver", "我阿爷开有轨电车，我开观光车。车子换了，铃声还是这只。"),
+          { card: "T1" }
+        ] },
+        { do: [S("tramdriver", "叮——当！让一让，车子来了！")] }
+      ] },
+      { id: "pastry", x: 78, y: 60, w: 22, h: 38, label: "老字号的柜台", verb: "交谈", talk: [
+        { when: "!card:T2", do: [
+          S("shopauntie", "蝴蝶酥刚刚出炉，排队排队！"),
+          S("shopauntie", "排队的人，一大半都是帮屋里人排的。等一歇歇，马上就好。"),
+          S("shopauntie", "上海人讲一歇歇，有辰光真的是一歇歇，有辰光是一个钟头。"),
+          { card: "T2" }
+        ] },
+        { do: [S("shopauntie", "拿好！趁热吃，冷了就勿脆了。")] }
+      ] },
+      { id: "neon", x: 25, y: 20, w: 20, h: 28, label: "霓虹招牌", verb: "查看", talk: [
+        { when: "!card:T3", do: [
+          S("me", "霓虹招牌一亮，整条街像一只打开的首饰盒。"),
+          { card: "T3" }
+        ] },
+        { do: [S("me", "红的、蓝的、金的，一闪一闪，像在眨眼睛。")] }
+      ] },
+      { id: "clock", x: 64, y: 2, w: 15, h: 24, label: "百货公司的钟", verb: "聆听", hidden: true, talk: [
+        { do: [
+          S("radio", "……当——当——"),
+          S("signal", "顾客朋友们，本店营业到夜里十点钟，欢迎慢慢叫看。"),
+          { card: "T4" }
         ] }
       ] }
     ]
@@ -514,6 +748,16 @@ export const SCENES = [
     intro: [S("me", "回到浦西，突然落雨了。整条马路的伞，像一朵一朵透明的蘑菇。")],
     hotspots: [
       { id: "barista", x: 0, y: 40, w: 22, h: 42, label: "咖啡店", verb: "交谈", talk: [
+        { when: "card:J1&!card:I5", do: [
+          S("me", "咖啡店门口，站着一个戴帽子的人，怀里抱着一捆透明的伞。"),
+          S("aning", "伞还侬。七把，一把勿少。"),
+          S("barista", "你……怎么知道是我？"),
+          S("aning", "全上海，只有侬会拿伞借给一个天天忘记带伞的人。"),
+          S("barista", "那……第八把，我不借了。我送你回去。"),
+          S("me", "雨里，两个人合撑一把伞，慢慢走远了。伞，还是歪向一边。"),
+          { card: "I5" }
+        ] },
+        { when: "card:I5", do: [S("me", "吧台上，七把透明的伞排成一排，像一串风铃。")] },
         { when: "card:I1", do: [S("barista", "伞送到了伐？……伊有没有讲什么？（小声）")] },
         { do: [
           S("barista", "落雨了，收衣裳！——啊，不好意思，我妈每次都这样喊，我到现在还是条件反射。"),
@@ -565,7 +809,8 @@ export const SCENES = [
           S("aning", "（笑了）伊每趟都这样讲。这是第七把了。"),
           S("aning", "阿爷讲，书摊要摆到夜里十点，因为总有人下班晚。"),
           S("aning", "我现在晓得了，也总有人会记得带伞来。"),
-          { card: "J1" }
+          { card: "J1" },
+          S("me", "……要不要回咖啡店，告诉她伞送到了？")
         ] },
         { do: [
           S("aning", "（翻了一页书）……要避雨可以进来。"),
@@ -652,10 +897,10 @@ export const SCENES = [
         { do: [S("moonman", "明天见，月亮。明天见，陌生人。")] }
       ] },
       { id: "themoon", x: 43, y: 12, w: 14, h: 24, label: "月亮", verb: "举起收音机", talk: [
-        { when: "count<28", do: [
+        { when: "count<38", do: [
           S("radio", "……沙沙……沙……（指针在晃，但还差一点点）"),
           S("me", "还不够……收音机的耳朵，还没有养好。"),
-          { tipCount: 28 }
+          { tipCount: 38 }
         ] },
         { do: [
           S("me", "我把收音机举向月亮。"),
@@ -731,5 +976,6 @@ export const BONUS = SCENES.filter((s) => s.bonus).map((s) => ({ id: s.id, freq:
 // 地图上的位置（百分比），基于生成的像素上海地图
 export const MAP_PINS = {
   tianjing: [28, 40], longtang: [18, 56], radio: [30, 69], wutong: [10, 38], bund: [50, 44], riverroad: [54, 75],
-  tavern: [15, 21], pearl: [72, 34], rain: [40, 28], bookstall: [34, 15], rooftop: [60, 19], moon: [44, 60]
+  tavern: [15, 21], pearl: [72, 34], rain: [40, 28], bookstall: [34, 15], rooftop: [60, 19], moon: [44, 60],
+  fuxing: [9, 78], yuyuan: [28, 88], anfu: [24, 6], suzhou: [78, 10], nanjing: [34, 50]
 };

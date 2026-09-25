@@ -1,6 +1,6 @@
 // 中 / EN 切换。配音始终是原声，英文模式只换字幕与界面。
-import { lineId } from "./voice-id.js?v=20260925g";
-import { EN } from "./i18n-en.js?v=20260925g";
+import { lineId } from "./voice-id.js?v=20260925h";
+import { EN } from "./i18n-en.js?v=20260925h";
 
 const KEY = "pixel-shanghai-lang";
 let lang = (() => {
@@ -53,7 +53,7 @@ export function applyStatic(root = document) {
 
 const UI = {
   // 标题
-  "一台老收音机 · 一天 · 五十二段上海闲话": "One old radio · one day · fifty-two Shanghai voices",
+  "一台老收音机 · 一天 · 七十三段上海闲话": "One old radio · one day · seventy-three Shanghai voices",
   "开始新的一天": "Start a new day",
   "重新开始": "Start over",
   "继续": "Continue",
@@ -125,7 +125,9 @@ const UI = {
   // 明信片
   "明信片": "Postcard", "长按图片或点下载保存": "Long-press the image or tap Download",
   "下载": "Download", "换一句": "Another quote", "我的上海明信片": "My Shanghai postcard", "像素上海明信片.png": "pixel-shanghai-postcard.png",
+  "声音地图": "Sound Map", "我的上海声音地图": "My Shanghai Sound Map", "像素上海声音地图.png": "pixel-shanghai-sound-map.png",
+  "收集了 {n}/{total} 段声音 · {h} 句上海话 · {p} 个地方": "{n}/{total} voices · {h} Shanghainese words · {p} places",
   "上海 · 弄堂电台": "SHANGHAI · LANE RADIO", "我的上海一天": "My Day in Shanghai",
-  "一台老收音机，一天，五十二段上海闲话": "One old radio, one day, fifty-two Shanghai voices",
+  "一台老收音机，一天，七十三段上海闲话": "One old radio, one day, seventy-three Shanghai voices",
   "分享": "Share"
 };

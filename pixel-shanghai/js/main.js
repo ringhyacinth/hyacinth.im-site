@@ -1,14 +1,14 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925g";
-import * as A from "./audio.js?v=20260925g";
-import { FX, pixelWipe } from "./fx.js?v=20260925g";
-import { lineId } from "./voice-id.js?v=20260925g";
-import { TRACKS } from "./tracks.js?v=20260925g";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925g";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925h";
+import * as A from "./audio.js?v=20260925h";
+import { FX, pixelWipe } from "./fx.js?v=20260925h";
+import { lineId } from "./voice-id.js?v=20260925h";
+import { TRACKS } from "./tracks.js?v=20260925h";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925h";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925g";
+const V = "?v=20260925h";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -708,8 +708,9 @@ function openMap() {
   }));
   $("#map-bonus").innerHTML = BONUS.map((b) => S.bonus[b.id]
     ? `<button class="px-btn gold" data-id="${b.id}">📻 FM ${b.freq} ${tScene(SCENE[b.id], "name")}</button>`
-    : `<span class="px-btn ghost">📻 FM ??.? ${T("？？？")}</span>`).join("");
-  $("#map-bonus").querySelectorAll("button").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); travel(b.dataset.id); }));
+    : `<span class="px-btn ghost">📻 FM ??.? ${T("？？？")}</span>`).join("") + `<button class="px-btn" id="map-share">🗺 ${T("声音地图")}</button>`;
+  $("#map-bonus").querySelectorAll("button[data-id]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); travel(b.dataset.id); }));
+  $("#map-share").addEventListener("click", (e) => { e.stopPropagation(); A.sfx("click"); showSoundMap(); });
   $("#map-progress").textContent = T("今天已经收集 {n} 段上海闲话", { n: mainCount() });
 }
 
@@ -1003,7 +1004,7 @@ async function makePostcard() {
   if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 60, H - 322, 256, 256); }
   g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText(T("像素上海：弄堂电台"), 330, H - 190);
   g.fillStyle = "#8a5a3c"; g.font = "26px Px, sans-serif";
-  g.fillText(T("一台老收音机，一天，五十二段上海闲话"), 330, H - 140);
+  g.fillText(T("一台老收音机，一天，七十三段上海闲话"), 330, H - 140);
   g.fillText("ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 96);
   return cv;
 }
@@ -1022,6 +1023,74 @@ async function showPostcard() {
   const url = cv.toDataURL("image/png");
   box.querySelector("img").src = url;
   box.querySelector("#pc-dl").href = url;
+}
+
+// 声音地图：每个地方收集到几段声音，画成一张可以保存的图
+async function makeSoundMap() {
+  const W = 1600, H = 1200, P = 10;
+  const cv = el("canvas"); cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  await document.fonts?.load?.("40px Px").catch(() => {});
+  g.fillStyle = "#231d35"; g.fillRect(0, 0, W, H);
+  g.fillStyle = "#d9573f"; g.fillRect(P * 3, P * 3, W - P * 6, P / 2); g.fillRect(P * 3, H - P * 3.5, W - P * 6, P / 2);
+  g.textAlign = "left"; g.fillStyle = "#f4c56b"; g.font = "56px Px, sans-serif"; g.fillText(T("我的上海声音地图"), 60, 104);
+  g.fillStyle = "#f3e6c8"; g.font = "28px Px, sans-serif";
+  g.fillText(T("收集了 {n}/{total} 段声音 · {h} 句上海话 · {p} 个地方", { n: totalCount(), total: CARD_IDS.length, h: HU_CARDS.filter(has).length, p: Object.keys(S.visited).length }), 60, 150);
+  const mx = 60, my = 190, mw = W - 120, mh = Math.round(mw * 9 / 16);
+  g.fillStyle = "#f3e6c8"; g.fillRect(mx - P, my - P, mw + P * 2, mh + P * 2);
+  const map = await loadImg(`assets/scene/map.png${V}`);
+  if (map) g.drawImage(map, mx, my, mw, mh);
+  g.fillStyle = "rgba(24,18,40,.38)"; g.fillRect(mx, my, mw, mh);
+  const at = (id) => [mx + MAP_PINS[id][0] / 100 * mw, my + MAP_PINS[id][1] / 100 * mh];
+  g.strokeStyle = "rgba(244,197,107,.75)"; g.lineWidth = 4; g.setLineDash([14, 10]); g.beginPath();
+  MAIN_ROUTE.forEach((id, i) => { const [x, y] = at(id); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.stroke(); g.setLineDash([]);
+  for (const id of MAIN_ROUTE) {
+    const [x, y] = at(id), all = sceneCards(id).length, got = sceneCards(id).filter(has).length;
+    const col = !got ? "#6a6480" : got === all ? "#f4c56b" : "#7ee0c3";
+    if (got) {
+      g.strokeStyle = col; g.lineWidth = 3;
+      for (let k = 1; k <= got; k++) { g.globalAlpha = 0.75 - k * 0.12; g.beginPath(); g.arc(x, y, 12 + k * 9, 0, Math.PI * 2); g.stroke(); }
+      g.globalAlpha = 1;
+    }
+    g.fillStyle = "#231d35"; g.fillRect(x - 12, y - 12, 24, 24);
+    g.fillStyle = col; g.fillRect(x - 8, y - 8, 16, 16);
+    const label = S.visited[id] ? `${tScene(SCENE[id], "name")} ${got}/${all}` : T("？？？");
+    g.font = "22px Px, sans-serif";
+    const lw = g.measureText(label).width + 20;
+    const lx = Math.min(mx + mw - lw, Math.max(mx, x - lw / 2)), ly = y + 22;
+    g.fillStyle = "rgba(35,29,53,.88)"; g.fillRect(lx, ly, lw, 32);
+    g.fillStyle = S.visited[id] ? "#f3e6c8" : "#9a93b0"; g.fillText(label, lx + 10, ly + 24);
+  }
+  let bx = 60;
+  const by = my + mh + 44;
+  g.font = "24px Px, sans-serif";
+  for (const b of BONUS) {
+    const all = sceneCards(b.id).length, got = sceneCards(b.id).filter(has).length;
+    const label = S.bonus[b.id] ? `FM ${b.freq} ${tScene(SCENE[b.id], "name")} ${got}/${all}` : "FM ??.?";
+    const w = g.measureText(label).width + 32;
+    g.fillStyle = S.bonus[b.id] ? "#f4c56b" : "#3a3150"; g.fillRect(bx, by, w, 44);
+    g.fillStyle = S.bonus[b.id] ? "#231d35" : "#9a93b0"; g.fillText(label, bx + 16, by + 31);
+    bx += w + 16;
+  }
+  g.fillStyle = "#8a83a0"; g.font = "22px Px, sans-serif";
+  g.fillText(`${T("像素上海：弄堂电台")} · ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai`, 60, H - 56);
+  return cv;
+}
+async function showSoundMap() {
+  let box = $("#soundmap");
+  if (!box) {
+    box = el("div", "panel", `<div class="p-win pc-win"><div class="p-head"><h2 data-i18n>声音地图</h2><div data-i18n>长按图片或点下载保存</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div><div class="pc-body"><img alt="我的上海声音地图" data-i18n-alt></div><div class="row"><a class="px-btn gold" id="sm-dl" download="${T("像素上海声音地图.png")}" data-i18n>下载</a></div></div>`);
+    applyStatic(box);
+    box.id = "soundmap";
+    document.body.appendChild(box);
+    box.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); box.classList.remove("open"); A.sfx("close"); });
+  }
+  box.classList.add("open");
+  const url = (await makeSoundMap()).toDataURL("image/png");
+  box.querySelector("img").src = url;
+  box.querySelector("#sm-dl").href = url;
 }
 
 // ---------------------------------------------------------------- 启动
@@ -1055,6 +1124,7 @@ window.__game = {
   dialogOpen: () => dialogOpen, advance: () => advance && advance(), choose: (n) => choiceKeys && choiceKeys(n),
   tune: (f) => { tuner.f = f; updateTuner(); }, mainCount, totalCount, setLang,
   postcard: async () => (await makePostcard()).toDataURL("image/png"),
+  soundmap: async () => (await makeSoundMap()).toDataURL("image/png"),
   defineSong: (name, def, tune) => { if (tune) A.registerTunes([tune]); A.defineSong(name, def); },
   renderMusic: async (name, sec) => {
     const f = await A.renderMusicOffline(name, sec);
