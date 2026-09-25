@@ -1,13 +1,14 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925f";
-import * as A from "./audio.js?v=20260925f";
-import { FX, pixelWipe } from "./fx.js?v=20260925f";
-import { lineId } from "./voice-id.js?v=20260925f";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925f";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925g";
+import * as A from "./audio.js?v=20260925g";
+import { FX, pixelWipe } from "./fx.js?v=20260925g";
+import { lineId } from "./voice-id.js?v=20260925g";
+import { TRACKS } from "./tracks.js?v=20260925g";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925g";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925f";
+const V = "?v=20260925g";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -256,9 +257,38 @@ function hasErrand(h) {
   return !!b && b.do.some((s) => (s.give && !S.items.includes(s.give)) || (s.take && S.items.includes(s.take)));
 }
 
+// 会移动的角色：热点框按视频时间沿轨迹移动，角色不在画面里时隐藏
+let tracked = [];
+function trackBox(tr, t) {
+  const keys = tr.keys, step = keys[1][0] - keys[0][0];
+  const i = Math.min(keys.length - 1, Math.floor((t % tr.dur) / step));
+  const a = keys[i], b = keys[(i + 1) % keys.length];
+  if (a[1] == null) return null;
+  const f = b[1] == null ? 0 : Math.min(1, ((t % tr.dur) - a[0]) / step);
+  const [x, y, w, h] = [1, 2, 3, 4].map((j) => a[j] + (b[1] == null ? 0 : (b[j] - a[j]) * f));
+  const W = Math.max(w * 1.4, 7), H = Math.max(h * 1.3, 11);
+  return { x: x + w / 2 - W / 2, y: y + h / 2 - H / 2, w: W, h: H };
+}
+(function trackLoop() {
+  if (tracked.length && current?.mode === "loop" && video.src) {
+    for (const k of tracked) {
+      const box = trackBox(k.track, video.currentTime);
+      k.el.classList.toggle("gone", !box);
+      k.spot.gone = !box;
+      if (box) {
+        k.el.classList.toggle("tag-below", box.y < 14);
+        k.el.style.left = `${box.x}%`; k.el.style.top = `${box.y}%`; k.el.style.width = `${box.w}%`; k.el.style.height = `${box.h}%`;
+        Object.assign(k.spot, box);
+      }
+    }
+  }
+  requestAnimationFrame(trackLoop);
+})();
+
 function renderHotspots() {
   const wrap = $("#hotspots");
   wrap.innerHTML = "";
+  tracked = [];
   if (holdPlaying) { fx.setSpots([]); return; }
   const spots = [];
   current.hotspots.forEach((h, i) => {
@@ -274,7 +304,10 @@ function renderHotspots() {
     b.addEventListener("pointerenter", () => { if (!dialogOpen) A.sfx("hover"); });
     b.addEventListener("click", (e) => { e.stopPropagation(); interact(h); });
     wrap.appendChild(b);
-    if (!h.hidden || S.flags.fixed) spots.push({ ...h, done: !pend, seed: i * 0.37 });
+    const spot = { ...h, done: !pend, seed: i * 0.37 };
+    if (!h.hidden || S.flags.fixed) spots.push(spot);
+    const track = TRACKS[current.id]?.[h.id];
+    if (track && current.mode === "loop") { b.classList.add("moving"); tracked.push({ el: b, spot, track }); }
   });
   fx.setSpots(spots);
 }
@@ -288,8 +321,11 @@ async function interact(h) {
   A.sfx("click");
   const branch = h.talk.find((t) => cond(t.when));
   if (!branch) return;
-  panTo(h.x + h.w / 2);
-  await runDialog(branch.do, h);
+  const moving = tracked.find((k) => k.spot.id === h.id);
+  panTo(moving ? moving.spot.x + moving.spot.w / 2 : h.x + h.w / 2);
+  if (moving) video.pause();
+  await runDialog(branch.do, moving ? moving.spot : h);
+  if (moving && current.mode === "loop") video.play().catch(() => {});
   renderHotspots();
   renderHUD();
 }

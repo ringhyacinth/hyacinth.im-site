@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Px";
-  src: url("../assets/font/fusion-pixel-zh.woff2?v=20260925f") format("woff2");
+  src: url("../assets/font/fusion-pixel-zh.woff2?v=20260925g") format("woff2");
   font-display: swap;
 }
 
@@ -81,6 +81,8 @@ img { -webkit-user-drag: none; }
 .hs .dot::after { content: ""; position: absolute; left: 20%; bottom: calc(var(--px) * -2); width: calc(var(--px) * 2); height: calc(var(--px) * 2); background: var(--cream); }
 .hs .dot::before { content: "…"; position: absolute; inset: 0; color: var(--ink); font-size: .7em; line-height: .6em; text-align: center; }
 .hs.secret { pointer-events: none; }
+.hs.tag-below .tag { bottom: auto; top: calc(100% + .3em); }
+.hs.gone { opacity: 0; pointer-events: none; }
 .hs.secret .c { --col: var(--gold); }
 .listening .hs.secret:not(.sealed) { pointer-events: auto; }
 .listening .hs.secret.new .tag { opacity: 1; transform: translate(-50%, 0); color: var(--gold); }

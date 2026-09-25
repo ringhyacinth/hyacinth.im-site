@@ -107,6 +107,7 @@ export class FX {
     g.fillStyle = `rgba(160,255,220,${0.06 * L})`; g.fillRect(0, band | 0, W, 6);
     // 每个热点的声波
     for (const s of this.spots) {
+      if (s.gone) continue;
       const cx = (s.x + s.w / 2) / 100 * W, cy = (s.y + s.h / 2) / 100 * H;
       const col = s.hidden ? [255, 206, 90] : [140, 255, 215];
       const done = s.done;

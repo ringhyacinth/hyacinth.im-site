@@ -639,9 +639,9 @@ export const SCENES = [
   },
   {
     id: "moon", name: "月下", time: "23:50", weather: "满月", mood: "finale", amb: "night", fx: "moon", mode: "still", need: 1, finale: true,
-    intro: [S("me", "快到午夜了。老楼中间，挂着一个很大很圆的月亮。"), S("me", "有个人站在马路中间，抬头看着它。")],
+    intro: [S("me", "快到午夜了。老楼中间，挂着一个很大很圆的月亮。"), S("me", "我站在马路中间，抱着外婆的收音机，抬头看着它。"), S("me", "街角有个人慢慢走过来，像是刚下夜班。")],
     hotspots: [
-      { id: "moonman", x: 45, y: 57, w: 12, h: 43, label: "夜归人", verb: "交谈", talk: [
+      { id: "moonman", x: 82, y: 73, w: 10, h: 27, label: "夜归人", verb: "交谈", talk: [
         { when: "!card:L1", do: [
           S("moonman", "……啊，吓我一跳。你也是来看月亮的？"),
           S("moonman", "我每天夜班回来，都在这条马路上看一眼月亮。"),
@@ -679,12 +679,12 @@ export const SCENES = [
     id: "paramount", name: "百乐门旧梦", time: "1947", weather: "霓虹", mood: "jazz", amb: "bar", fx: "neon", mode: "loop", need: 1, bonus: true, freq: 90.3,
     intro: [S("radio", "……蓬嚓嚓……（一段很老很老的舞曲）"), S("me", "收音机把我带到了一个霓虹闪烁的年代。")],
     hotspots: [
-      { id: "dancers", x: 15, y: 77, w: 50, h: 23, label: "跳舞的人们", verb: "聆听", talk: [
+      { id: "dancers", x: 12, y: 60, w: 35, h: 37, label: "跳舞的人们", verb: "聆听", talk: [
         { when: "!card:M1", do: [S("dancer", "蓬嚓嚓、蓬嚓嚓——小姐，跳舞勿要看脚，要看对方的眼睛。"), S("me", "……周先生说的那支舞，会是这样吗？"), { card: "M1" }] },
         { when: "!card:M2", do: [S("dancer", "头发要梳得苍蝇立勿牢，这叫扎台型！"), { card: "M2" }] },
         { do: [S("dancer", "今夜勿打烊！")] }
       ] },
-      { id: "dashijie", x: 3, y: 27, w: 16, h: 20, label: "大世界招牌", verb: "聆听", hidden: true, talk: [
+      { id: "dashijie", x: 10, y: 9, w: 8, h: 34, label: "大世界招牌", verb: "聆听", hidden: true, talk: [
         { do: [S("signal", "进了大世界，哈哈镜里一照，胖子变瘦子，瘦子变胖子！"), { card: "M3" }] }
       ] }
     ]
