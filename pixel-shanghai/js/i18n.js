@@ -1,6 +1,6 @@
 // 中 / EN 切换。配音始终是原声，英文模式只换字幕与界面。
-import { lineId } from "./voice-id.js?v=20260925h";
-import { EN } from "./i18n-en.js?v=20260925h";
+import { lineId } from "./voice-id.js?v=20260926a";
+import { EN } from "./i18n-en.js?v=20260926a";
 
 const KEY = "pixel-shanghai-lang";
 let lang = (() => {

@@ -1,14 +1,14 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925h";
-import * as A from "./audio.js?v=20260925h";
-import { FX, pixelWipe } from "./fx.js?v=20260925h";
-import { lineId } from "./voice-id.js?v=20260925h";
-import { TRACKS } from "./tracks.js?v=20260925h";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925h";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260926a";
+import * as A from "./audio.js?v=20260926a";
+import { FX, pixelWipe } from "./fx.js?v=20260926a";
+import { lineId } from "./voice-id.js?v=20260926a";
+import { TRACKS } from "./tracks.js?v=20260926a";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260926a";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925h";
+const V = "?v=20260926a";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -355,9 +355,18 @@ let waveColor = "#7ee0c3", waveTalking = false;
 function openDialog() { dialogOpen = true; dlg.classList.add("open"); app.classList.add("talking"); A.duckMusic(0.55); }
 function closeDialog() { dialogOpen = false; dlg.classList.remove("open"); app.classList.remove("talking"); A.duckMusic(listening ? 0.35 : 1); }
 
+// 横屏时对话框放在上方或下方：取和说话人（没有说话人时取本场景热点）重叠更少的一边
+const DLG_BOTTOM = [70, 97], DLG_TOP = [10.5, 37.5];
+function placeDialog(spot) {
+  const boxes = spot ? [spot] : (current?.hotspots || []).filter((h) => !h.hidden);
+  const overlap = ([a, b]) => boxes.reduce((s, h) => s + Math.max(0, Math.min(b, h.y + h.h) - Math.max(a, h.y)), 0);
+  dlg.classList.toggle("top", overlap(DLG_TOP) < overlap(DLG_BOTTOM));
+}
+
 async function runDialog(steps, spot) {
   if (!steps || !steps.length) return;
   dlgSpot = spot || null;
+  placeDialog(spot);
   prefetchVoices(steps);
   openDialog();
   await runSteps(steps, spot);

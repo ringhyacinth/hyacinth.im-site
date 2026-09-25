@@ -15,6 +15,7 @@
   --red: #d9573f;
   --teal: #7ee0c3;
   --frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%23120f1c' d='M3 0h6v1h2v2h1v6h-1v2H9v1H3v-1H1V9H0V3h1V1h2z'/%3E%3Cpath fill='%23f5e8c8' d='M3 1h6v1h1v1h1v6h-1v1H9v1H3v-1H2V9H1V3h1V2h1z'/%3E%3Cpath fill='%23231d35' d='M3 2h6v1h1v6H9v1H3V9H2V3h1z'/%3E%3C/svg%3E");
+  --frame-glass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%23120f1c' fill-rule='evenodd' d='M3 0h6v1h2v2h1v6h-1v2H9v1H3v-1H1V9H0V3h1V1h2zM3 1h6v1h1v1h1v6h-1v1H9v1H3v-1H2V9H1V3h1V2h1z'/%3E%3Cpath fill='%23f5e8c8' fill-rule='evenodd' d='M3 1h6v1h1v1h1v6h-1v1H9v1H3v-1H2V9H1V3h1V2h1zM3 2h6v1h1v6H9v1H3V9H2V3h1z'/%3E%3Cpath fill='%23231d35' fill-opacity='.84' d='M3 2h6v1h1v6H9v1H3V9H2V3h1z'/%3E%3C/svg%3E");
   --frame-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%23120f1c' d='M3 0h6v1h2v2h1v6h-1v2H9v1H3v-1H1V9H0V3h1V1h2z'/%3E%3Cpath fill='%23f6c35c' d='M3 1h6v1h1v1h1v6h-1v1H9v1H3v-1H2V9H1V3h1V2h1z'/%3E%3Cpath fill='%233a2a1c' d='M3 2h6v1h1v6H9v1H3V9H2V3h1z'/%3E%3C/svg%3E");
   --px: max(3px, calc(var(--ui, 18px) / 6));
 }
@@ -161,9 +162,11 @@ img[src*="assets/item/"], img[src*="assets/portrait/"] { image-rendering: pixela
 
 #dialog {
   position: absolute; z-index: 30; display: grid; grid-template-columns: auto 1fr; gap: 1em; padding: .8em 1.1em;
-  left: calc(var(--sl) + var(--sw) * .035); width: calc(var(--sw) * .93); top: calc(var(--st) + var(--sh) * .655); height: calc(var(--sh) * .305);
+  left: calc(var(--sl) + var(--sw) * .035); width: calc(var(--sw) * .93); top: calc(var(--st) + var(--sh) * .70); height: calc(var(--sh) * .27);
   font-size: var(--fs); opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .18s, transform .18s steps(3); cursor: pointer;
+  border-image-source: var(--frame-glass);
 }
+#dialog.top { top: calc(var(--st) + var(--sh) * .105); transform: translateY(-12px); }
 #dialog.open { opacity: 1; transform: none; pointer-events: auto; }
 #d-portrait { height: 100%; aspect-ratio: 1; position: relative; background: var(--ink); box-shadow: 0 0 0 var(--px) var(--cream); overflow: hidden; }
 #d-portrait img, #d-portrait canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -416,6 +419,7 @@ em.rom { font-style: normal; color: #ffcf9e; }
 
 /* ------------------------------------------------ 竖屏 */
 
+.portrait #dialog:not(.tip) { border-image-source: var(--frame); }
 .portrait #dialog { left: 8px; width: calc(100vw - 16px); top: calc(var(--st) + var(--sh) + 10px); height: auto; min-height: 28vh; max-height: calc(100vh - var(--st) - var(--sh) - 20px); grid-template-columns: 32vw 1fr; }
 .portrait #d-portrait { height: auto; width: 32vw; }
 .portrait #stage { touch-action: pan-y; }

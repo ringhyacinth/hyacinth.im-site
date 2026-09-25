@@ -25,8 +25,8 @@ export const SPEAKERS = {
   chessman: { name: "下棋的老先生", portrait: "chessman", voice: 0.72, wave: "#c9d6a0" },
   chef: { name: "小笼包师傅", portrait: "chef", voice: 0.85, wave: "#ffe0a8" },
   actress: { name: "背台词的演员", portrait: "actress", voice: 1.1, wave: "#f5a3b8" },
-  haixin: { name: "海辛", portrait: null, voice: 1.12, wave: "#ffb3d1" },
-  awen: { name: "阿文", portrait: null, voice: 0.9, wave: "#9fd0ff" },
+  haixin: { name: "海辛", portrait: "haixin", voice: 1.12, wave: "#ffb3d1" },
+  awen: { name: "阿文", portrait: "awen", voice: 0.9, wave: "#9fd0ff" },
   runner: { name: "跑步的姑娘", portrait: "runner", voice: 1.12, wave: "#ffb38a" },
   fisher: { name: "钓鱼的老伯", portrait: "fisher", voice: 0.72, wave: "#a8c8d8" },
   tramdriver: { name: "铛铛车司机", portrait: "tramdriver", voice: 0.85, wave: "#ffcf6b" },
@@ -176,6 +176,12 @@ export const SCENES = [
           S("apo", "阿拉上海人叫伊“万国旗”。一弄堂的万国旗一升，太阳就出来了。"),
           S("me", "……好像真的是在升旗。"),
           { card: "A2" }
+        ] },
+        { when: "!egg_drum", do: [
+          S("me", "隔壁亭子间里，有个小姑娘在练架子鼓，咚、咚、嚓。"),
+          S("me", "她妈妈坐在旁边打拍子，比她还投入。"),
+          S("me", "……一个人把小囡带大的妈妈，大概都很会打拍子。"),
+          { set: "egg_drum" }
         ] },
         { do: [S("me", "风一吹，万国旗就呼啦呼啦地响。")] }
       ] },
@@ -580,6 +586,11 @@ export const SCENES = [
           S("me", "花店、旧书店、咖啡店，门口都趴着一条狗，像三个看门的店员。"),
           { card: "R3" }
         ] },
+        { when: "!egg_shoe", do: [
+          S("me", "旧书店门口的台阶上，放着一只女式皮鞋。只有一只。"),
+          S("me", "……不晓得是哪一段爱情神话的开头。"),
+          { set: "egg_shoe" }
+        ] },
         { do: [S("me", "三条狗同时打了个哈欠。")] }
       ] },
       { id: "theatre", x: 7, y: 38, w: 11, h: 55, label: "剧场的门", verb: "聆听", hidden: true, talk: [
@@ -596,7 +607,7 @@ export const SCENES = [
     id: "suzhou", name: "苏州河边", music: "t_suzhou", time: "17:10", weather: "晴 · 晚霞", mood: "dusk", amb: "river", fx: "gulls", mode: "loop", need: 2,
     intro: [S("me", "苏州河的步道上，夕阳把河水染成橘子汽水的颜色。")],
     hotspots: [
-      { id: "runner", x: 14, y: 41, w: 12, h: 40, label: "跑步的姑娘", verb: "交谈", talk: [
+      { id: "runner", x: 16, y: 34, w: 13, h: 48, label: "跑步的姑娘", verb: "交谈", talk: [
         { when: "!card:S1", do: [
           S("runner", "步道通了以后，我每天下班沿着苏州河跑五公里。"),
           S("runner", "从这里跑到外白渡桥，看一眼黄浦江，再跑回来。"),
@@ -618,6 +629,11 @@ export const SCENES = [
         { when: "!card:S3", do: [
           S("me", "一座桥接着一座桥，每座桥下面，都有一只慢慢开的船。"),
           { card: "S3" }
+        ] },
+        { when: "!egg_mermaid", do: [
+          S("me", "对岸旧仓库的墙上，有人画了一条美人鱼。"),
+          S("me", "我想起一部老电影里的一句话：“如果有一天我走了，你会像马达那样找我吗？”"),
+          { set: "egg_mermaid" }
         ] },
         { do: [S("me", "晚霞一点一点沉到桥下面去了。")] }
       ] },
@@ -695,6 +711,12 @@ export const SCENES = [
           S("me", "霓虹招牌一亮，整条街像一只打开的首饰盒。"),
           { card: "T3" }
         ] },
+        { when: "!egg_buxiang", do: [
+          S("me", "霓虹灯底下，一个穿西装的爷叔被人问了一句什么。"),
+          S("me", "伊笑笑，不响。"),
+          S("me", "……上海人的“不响”，有时候比讲一大段还要多。"),
+          { set: "egg_buxiang" }
+        ] },
         { do: [S("me", "红的、蓝的、金的，一闪一闪，像在眨眼睛。")] }
       ] },
       { id: "clock", x: 64, y: 2, w: 15, h: 24, label: "百货公司的钟", verb: "聆听", hidden: true, talk: [
@@ -707,10 +729,10 @@ export const SCENES = [
     ]
   },
   {
-    id: "pearl", name: "陆家嘴", time: "19:40", weather: "晴 · 夜", mood: "night", amb: "city", fx: "sparkle", mode: "hold", need: 2,
+    id: "pearl", name: "陆家嘴", time: "19:40", weather: "晴 · 夜", mood: "night", amb: "city", fx: "sparkle", mode: "loop", need: 2,
     intro: [S("me", "坐轮渡过江。江对面的灯全亮了，明珠像一串粉色的糖葫芦。")],
     hotspots: [
-      { id: "rider", x: 22, y: 77, w: 27, h: 23, label: "外卖小哥", verb: "交谈", talk: [
+      { id: "rider", x: 18, y: 70, w: 19, h: 30, label: "外卖小哥", verb: "交谈", talk: [
         { when: "!card:H1", do: [
           S("rider", "借过借过！……啊，不好意思，差点撞到你。"),
           S("me", "没事，你忙吧。"),
@@ -724,7 +746,7 @@ export const SCENES = [
         ] },
         { do: [S("rider", "（电动车嗖地一下开走了，留下一句）谢谢侬——")] }
       ] },
-      { id: "pearltower", x: 21, y: 0, w: 12, h: 76, label: "东方明珠", verb: "查看", talk: [
+      { id: "pearltower", x: 18, y: 2, w: 8, h: 66, label: "东方明珠", verb: "查看", talk: [
         { when: "!card:H2", do: [
           S("me", "外婆说过，明珠造好的那一年，弄堂里的人都爬到屋顶上看。"),
           S("radio", "……沙沙……（一段很老的广播声，带着欢呼）……"),
@@ -733,7 +755,7 @@ export const SCENES = [
         ] },
         { do: [S("me", "粉色的球一闪一闪，像在跟弄堂里的屋顶打招呼。")] }
       ] },
-      { id: "office", x: 57, y: 5, w: 28, h: 70, label: "还亮着的窗", verb: "聆听", hidden: true, talk: [
+      { id: "office", x: 65, y: 16, w: 30, h: 56, label: "还亮着的窗", verb: "聆听", hidden: true, talk: [
         { do: [
           S("signal", "妈，今朝勿回来吃夜饭了……"),
           S("signal", "嗯，晓得，会早点困觉的。侬也早点困。"),
@@ -975,7 +997,8 @@ export const BONUS = SCENES.filter((s) => s.bonus).map((s) => ({ id: s.id, freq:
 
 // 地图上的位置（百分比），基于生成的像素上海地图
 export const MAP_PINS = {
-  tianjing: [28, 40], longtang: [18, 56], radio: [30, 69], wutong: [10, 38], bund: [50, 44], riverroad: [54, 75],
-  tavern: [15, 21], pearl: [72, 34], rain: [40, 28], bookstall: [34, 15], rooftop: [60, 19], moon: [44, 60],
-  fuxing: [9, 78], yuyuan: [28, 88], anfu: [24, 6], suzhou: [78, 10], nanjing: [34, 50]
+  // 黄浦江从右上流到下方正中：左侧浦西（外滩沿江、弄堂、西边梧桐区），右下浦东（陆家嘴）
+  tianjing: [26, 38], longtang: [10, 40], radio: [20, 54], fuxing: [6, 66], wutong: [6, 26], bund: [40, 54],
+  yuyuan: [10, 86], riverroad: [28, 80], anfu: [12, 12], suzhou: [72, 12], tavern: [22, 24], nanjing: [54, 22],
+  pearl: [72, 58], rain: [38, 26], bookstall: [36, 10], rooftop: [56, 8], moon: [44, 40]
 };
