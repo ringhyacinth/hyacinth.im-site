@@ -1,6 +1,6 @@
 // 中 / EN 切换。配音始终是原声，英文模式只换字幕与界面。
-import { lineId } from "./voice-id.js?v=20260925d";
-import { EN } from "./i18n-en.js?v=20260925d";
+import { lineId } from "./voice-id.js?v=20260925e";
+import { EN } from "./i18n-en.js?v=20260925e";
 
 const KEY = "pixel-shanghai-lang";
 let lang = (() => {
@@ -60,7 +60,7 @@ const UI = {
   "正在调频…": "Tuning in…",
   '🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音':
     '🎧 Headphones recommended · Tap glowing people and things to talk · Once the radio works, <span class="kb-only">press Space</span><span class="touch-only">tap “Listen”</span> to find hidden sounds · Voices in Shanghainese with English subtitles',
-  "原作视频《像素上海》海辛 Hyacinth · 游戏制作 Mouse": "Based on “Pixel Shanghai” by Hyacinth · Game by Mouse",
+  "《像素上海》视频与游戏 · 海辛 Hyacinth & 阿文 Simon": "“Pixel Shanghai” film & game by Hyacinth & Simon",
   "🎧 建议戴耳机 · 全程上海话配音": "🎧 Best with headphones · Shanghainese voices, English subs",
   "这个小游戏需要开启 JavaScript。": "This little game needs JavaScript.",
   // 工具栏与面板
@@ -120,8 +120,8 @@ const UI = {
   "像素上海：弄堂电台": "Pixel Shanghai: Lane Radio",
   "段声音": "voices", "句上海话": "Shanghainese words", "分钟": "minutes", "个地方": "places",
   "生成我的上海明信片": "Make my Shanghai postcard", "继续寻找番外电台": "Find the bonus stations", "回到标题": "Back to title",
-  "原作视频《像素上海》· 海辛 Hyacinth<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · Mouse（Cursor Agent）<br>沪语 / 四川话 / 普通话配音 · Fun-CosyVoice3 本地合成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）":
-    "Based on the film “Pixel Shanghai” by Hyacinth<br>Scene animation from the original film · Characters and map generated with Nano Banana Pro<br>Story, code, 8-bit arrangements and sound · Mouse (Cursor Agent)<br>Shanghainese / Sichuanese / Mandarin voices synthesised locally with Fun-CosyVoice3<br>Classic melodies: Chen Gexin “Night Shanghai”, “Rose, Rose, I Love You”, “By Suzhou Creek”, “Roses Bloom Everywhere” · Ren Guang “Colourful Clouds Chasing the Moon”, “Song of the Fishermen” · Nie Er “Newspaper Seller's Song” · Jiangnan tune “Purple Bamboo”<br>Font: Fusion Pixel Font (SIL OFL 1.1)",
+  "《像素上海》视频与游戏 · 海辛 Hyacinth &amp; 阿文 Simon<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · AI 助手 Mouse 协助<br>沪语 / 四川话 / 普通话配音 · Seedance 2.5 生成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）":
+    "“Pixel Shanghai” film &amp; game by Hyacinth &amp; Simon<br>Scene animation from the original film · Characters and map generated with Nano Banana Pro<br>Story, code, 8-bit arrangements and sound · assisted by Mouse, an AI assistant<br>Shanghainese / Sichuanese / Mandarin voices generated with Seedance 2.5<br>Classic melodies: Chen Gexin “Night Shanghai”, “Rose, Rose, I Love You”, “By Suzhou Creek”, “Roses Bloom Everywhere” · Ren Guang “Colourful Clouds Chasing the Moon”, “Song of the Fishermen” · Nie Er “Newspaper Seller's Song” · Jiangnan tune “Purple Bamboo”<br>Font: Fusion Pixel Font (SIL OFL 1.1)",
   // 明信片
   "明信片": "Postcard", "长按图片或点下载保存": "Long-press the image or tap Download",
   "下载": "Download", "换一句": "Another quote", "我的上海明信片": "My Shanghai postcard", "像素上海明信片.png": "pixel-shanghai-postcard.png",

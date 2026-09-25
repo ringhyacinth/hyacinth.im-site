@@ -1,13 +1,13 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925d";
-import * as A from "./audio.js?v=20260925d";
-import { FX, pixelWipe } from "./fx.js?v=20260925d";
-import { lineId } from "./voice-id.js?v=20260925d";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925d";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260925e";
+import * as A from "./audio.js?v=20260925e";
+import { FX, pixelWipe } from "./fx.js?v=20260925e";
+import { lineId } from "./voice-id.js?v=20260925e";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260925e";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260925d";
+const V = "?v=20260925e";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -863,7 +863,7 @@ async function playEnding() {
   showCredits();
 }
 
-const CREDITS = "原作视频《像素上海》· 海辛 Hyacinth<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · Mouse（Cursor Agent）<br>沪语 / 四川话 / 普通话配音 · Fun-CosyVoice3 本地合成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）";
+const CREDITS = "《像素上海》视频与游戏 · 海辛 Hyacinth &amp; 阿文 Simon<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · AI 助手 Mouse 协助<br>沪语 / 四川话 / 普通话配音 · Seedance 2.5 生成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）";
 function showCredits() {
   const c = $("#credits");
   const mins = Math.max(1, Math.round((Date.now() - S.started) / 60000));

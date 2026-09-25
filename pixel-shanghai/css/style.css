@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Px";
-  src: url("../assets/font/fusion-pixel-zh.woff2?v=20260925d") format("woff2");
+  src: url("../assets/font/fusion-pixel-zh.woff2?v=20260925e") format("woff2");
   font-display: swap;
 }
 
@@ -350,7 +350,7 @@ kbd { font-family: inherit; background: var(--panel2); padding: 0 .35em; box-sha
 .t-menu { gap: .9em; }
 .t-kicker { letter-spacing: .3em; color: var(--gold); font-size: .6em; opacity: .8; text-shadow: 0 2px 0 var(--ink); margin-bottom: .2em; }
 #title h1 { margin: 0; font-weight: normal; font-size: 4.2em; letter-spacing: .15em; color: #fff4dc; line-height: 1; text-shadow: 0 .06em 0 #d9573f, 0 .12em 0 #6d1d14, .06em .12em 0 #6d1d14, 0 .18em 0 var(--ink), .1em .2em 0 rgba(0, 0, 0, .35); }
-.t-sign { display: flex; gap: .25em; margin: .25em 0 .5em; }
+.t-sign { display: flex; gap: .25em; margin: 1.1em 0 .5em; }
 .t-sign span { display: grid; place-items: center; width: 1.9em; height: 1.9em; font-size: 1.3em; background: #2a1020; color: #ffd3a1; box-shadow: 0 0 0 .12em #ff6b4a, 0 0 .6em .1em rgba(255, 107, 74, .6); text-shadow: 0 0 .4em #ff8a5c; animation: neon 3s steps(1) infinite; }
 .t-sign span:nth-child(3) { animation-delay: .7s; }
 @keyframes neon { 0%, 72%, 76%, 100% { opacity: 1; } 74% { opacity: .35; } }
