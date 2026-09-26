@@ -1,6 +1,6 @@
 // 中 / EN 切换。配音始终是原声，英文模式只换字幕与界面。
-import { lineId } from "./voice-id.js?v=20260926a";
-import { EN } from "./i18n-en.js?v=20260926a";
+import { lineId } from "./voice-id.js?v=20260926b";
+import { EN } from "./i18n-en.js?v=20260926b";
 
 const KEY = "pixel-shanghai-lang";
 let lang = (() => {
@@ -53,7 +53,7 @@ export function applyStatic(root = document) {
 
 const UI = {
   // 标题
-  "一台老收音机 · 一天 · 七十三段上海闲话": "One old radio · one day · seventy-three Shanghai voices",
+  "一台老收音机 · 一天 · 一座城的闲话": "One old radio · one day · a city full of voices",
   "开始新的一天": "Start a new day",
   "重新开始": "Start over",
   "继续": "Continue",
@@ -61,6 +61,8 @@ const UI = {
   '🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音':
     '🎧 Headphones recommended · Tap glowing people and things to talk · Once the radio works, <span class="kb-only">press Space</span><span class="touch-only">tap “Listen”</span> to find hidden sounds · Voices in Shanghainese with English subtitles',
   "《像素上海》视频与游戏 · 海辛 Hyacinth & 阿文 Simon": "“Pixel Shanghai” film & game by Hyacinth & Simon",
+  '《像素上海》视频与游戏 · <a href="https://x.com/ring_hyacinth" target="_blank" rel="noopener">海辛 Hyacinth</a> &amp; <a href="https://x.com/simonxxoo" target="_blank" rel="noopener">阿文 Simon</a>':
+    '“Pixel Shanghai” film &amp; game by <a href="https://x.com/ring_hyacinth" target="_blank" rel="noopener">Hyacinth</a> &amp; <a href="https://x.com/simonxxoo" target="_blank" rel="noopener">Simon</a>',
   "🎧 建议戴耳机 · 全程上海话配音": "🎧 Best with headphones · Shanghainese voices, English subs",
   "这个小游戏需要开启 JavaScript。": "This little game needs JavaScript.",
   // 工具栏与面板
@@ -71,6 +73,7 @@ const UI = {
   "上海 · 一天": "One Day in Shanghai",
   "外婆的收音机 · FM": "Grandma's radio · FM", "拖动微调": "Drag to fine-tune",
   "配音": "Voices", "音乐": "Music", "音效": "Sound FX", "语言": "Language",
+  "自动翻页": "Auto-advance", "关": "Off", "开": "On",
   '<kbd>空格</kbd> 继续对话 / 收听模式': "<kbd>Space</kbd> next line / Listen mode",
   '<kbd>M</kbd> 地图 <kbd>J</kbd> 收集簿 <kbd>T</kbd> 调频': "<kbd>M</kbd> Map <kbd>J</kbd> Journal <kbd>T</kbd> Tuner",
   '<kbd>1</kbd><kbd>2</kbd> 选择回答 <kbd>Esc</kbd> 关闭': "<kbd>1</kbd><kbd>2</kbd> choose a reply <kbd>Esc</kbd> close",
@@ -128,6 +131,6 @@ const UI = {
   "声音地图": "Sound Map", "我的上海声音地图": "My Shanghai Sound Map", "像素上海声音地图.png": "pixel-shanghai-sound-map.png",
   "收集了 {n}/{total} 段声音 · {h} 句上海话 · {p} 个地方": "{n}/{total} voices · {h} Shanghainese words · {p} places",
   "上海 · 弄堂电台": "SHANGHAI · LANE RADIO", "我的上海一天": "My Day in Shanghai",
-  "一台老收音机，一天，七十三段上海闲话": "One old radio, one day, seventy-three Shanghai voices",
+  "一台老收音机，一天，一座城的闲话": "One old radio, one day, a city full of voices",
   "分享": "Share"
 };

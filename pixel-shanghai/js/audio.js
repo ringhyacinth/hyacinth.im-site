@@ -1,5 +1,5 @@
 // 全部音乐与音效都在浏览器里实时合成：芯片乐、环境声、音效、角色“嘀嗒”语音；角色配音为预录 MP3。
-import { TUNES as TUNE_DATA } from "./tunes.js?v=20260926a";
+import { TUNES as TUNE_DATA } from "./tunes.js?v=20260926b";
 
 let ctx = null;
 let master, musicBus, musicDuck, ambBus, sfxBus, voiceBus, radioBus, lineBus, lineRadio, noiseBuf;
@@ -75,6 +75,23 @@ export async function renderMusicOffline(name, seconds = 30, rate = 22050) {
   Object.defineProperty(off, "currentTime", { get: () => fake });
   while (music.nextBarTime < seconds) { scheduleTune(); fake = music.nextBarTime; }
   ({ ctx, master, musicBus, noiseBuf, pulse12, pulse25, music } = saved);
+  const buf = await off.startRendering();
+  return buf.getChannelData(0);
+}
+
+// 离线渲染一个音效为 PCM（宣传片混音用），不影响正在运行的上下文。
+export async function renderSfxOffline(name, seconds = 2, rate = 44100) {
+  const saved = { ctx, master, sfxBus, noiseBuf, pulse12, pulse25 };
+  const off = new OfflineAudioContext(1, Math.ceil(seconds * rate), rate);
+  ctx = off;
+  master = off.createGain(); master.gain.value = 0.9; master.connect(off.destination);
+  sfxBus = off.createGain(); sfxBus.gain.value = 1; sfxBus.connect(master);
+  noiseBuf = off.createBuffer(1, rate * 2, rate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  buildWaves();
+  sfx(name);
+  ({ ctx, master, sfxBus, noiseBuf, pulse12, pulse25 } = saved);
   const buf = await off.startRendering();
   return buf.getChannelData(0);
 }
@@ -593,6 +610,7 @@ export function blip(voice = 1, radio = false) {
 }
 
 export function sfx(name) {
+  window.__onSfx?.(name);
   if (!ctx) return;
   const t = ctx.currentTime + 0.01;
   const S = sfxBus;

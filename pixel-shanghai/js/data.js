@@ -199,7 +199,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "longtang", name: "弄堂早点", music: "t_maibao", time: "07:30", weather: "晴", mood: "morning", amb: "street", fx: "steam", mode: "loop", need: 3,
+    id: "longtang", name: "弄堂早点", music: "t_maibao", time: "07:30", weather: "晴", mood: "morning", amb: "street", fx: "steam", mode: "loop", need: 2,
     intro: [S("me", "弄堂里已经坐满了人。报纸、藤椅、蒸笼的白气——这里比闹钟还早醒。")],
     hotspots: [
       { id: "zhang", x: 29, y: 57, w: 12, h: 35, label: "张老伯", verb: "交谈", talk: [
@@ -342,7 +342,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "fuxing", name: "复兴公园", music: "dusk", time: "09:50", weather: "晴 · 薄雾", mood: "morning", amb: "birds", fx: "sunleaves", mode: "loop", need: 2,
+    id: "fuxing", name: "复兴公园", music: "dusk", time: "09:50", weather: "晴 · 薄雾", mood: "morning", amb: "birds", fx: "sunleaves", mode: "loop", need: 1,
     intro: [S("me", "收音机修好了，路过复兴公园。音乐声从梧桐树后面飘出来。")],
     hotspots: [
       { id: "dancepa", x: 20, y: 32, w: 17, h: 54, label: "跳舞的爷叔", verb: "交谈", talk: [
@@ -432,7 +432,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "bund", name: "外滩", time: "12:00", weather: "薄雾", mood: "noon", amb: "river", fx: "haze", mode: "loop", need: 3,
+    id: "bund", name: "外滩", time: "12:00", weather: "薄雾", mood: "noon", amb: "river", fx: "haze", mode: "loop", need: 2,
     intro: [S("me", "外滩。江面上有薄薄的雾，钟楼刚好指向正午。"), { sfx: "chime" }]
     , hotspots: [
       { id: "tourists", x: 72, y: 80, w: 11, h: 17, label: "游客一家", verb: "交谈", talk: [
@@ -478,7 +478,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "yuyuan", name: "城隍庙", music: "t_zizhu", time: "12:50", weather: "晴", mood: "noon", amb: "street", fx: "steam", mode: "loop", need: 2,
+    id: "yuyuan", name: "城隍庙", music: "t_zizhu", time: "12:50", weather: "晴", mood: "noon", amb: "street", fx: "steam", mode: "loop", need: 1,
     intro: [S("me", "九曲桥上人挤人。空气里全是小笼包和梨膏糖的味道。")],
     hotspots: [
       { id: "tourist2", x: 26, y: 30, w: 16, h: 54, label: "成都来的阿哥", verb: "交谈", talk: [
@@ -558,7 +558,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "anfu", name: "安福路", time: "15:40", weather: "晴 · 梧桐影", mood: "noon", amb: "street", fx: "sunleaves", mode: "loop", need: 2,
+    id: "anfu", name: "安福路", time: "15:40", weather: "晴 · 梧桐影", mood: "noon", amb: "street", fx: "sunleaves", mode: "loop", need: 1,
     intro: [S("me", "安福路窄窄的，梧桐叶把阳光剪成一块一块。")],
     hotspots: [
       { id: "actress", x: 18, y: 55, w: 10, h: 36, label: "背台词的演员", verb: "交谈", talk: [
@@ -604,7 +604,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "suzhou", name: "苏州河边", music: "t_suzhou", time: "17:10", weather: "晴 · 晚霞", mood: "dusk", amb: "river", fx: "gulls", mode: "loop", need: 2,
+    id: "suzhou", name: "苏州河边", music: "t_suzhou", time: "17:10", weather: "晴 · 晚霞", mood: "dusk", amb: "river", fx: "gulls", mode: "loop", need: 1,
     intro: [S("me", "苏州河的步道上，夕阳把河水染成橘子汽水的颜色。")],
     hotspots: [
       { id: "runner", x: 16, y: 34, w: 13, h: 48, label: "跑步的姑娘", verb: "交谈", talk: [
@@ -685,7 +685,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "nanjing", name: "南京路", music: "jazz", time: "19:00", weather: "晴 · 霓虹", mood: "night", amb: "city", fx: "sparkle", mode: "loop", need: 2,
+    id: "nanjing", name: "南京路", music: "jazz", time: "19:00", weather: "晴 · 霓虹", mood: "night", amb: "city", fx: "sparkle", mode: "loop", need: 1,
     intro: [S("me", "南京路的灯一下子全亮了。人潮像一条会发光的河。")],
     hotspots: [
       { id: "tram", x: 22, y: 50, w: 30, h: 42, label: "铛铛车", verb: "交谈", talk: [
@@ -729,7 +729,7 @@ export const SCENES = [
     ]
   },
   {
-    id: "pearl", name: "陆家嘴", time: "19:40", weather: "晴 · 夜", mood: "night", amb: "city", fx: "sparkle", mode: "loop", need: 2,
+    id: "pearl", name: "陆家嘴", time: "19:40", weather: "晴 · 夜", mood: "night", amb: "city", fx: "sparkle", mode: "loop", need: 1,
     intro: [S("me", "坐轮渡过江。江对面的灯全亮了，明珠像一串粉色的糖葫芦。")],
     hotspots: [
       { id: "rider", x: 18, y: 70, w: 19, h: 30, label: "外卖小哥", verb: "交谈", talk: [
@@ -919,10 +919,10 @@ export const SCENES = [
         { do: [S("moonman", "明天见，月亮。明天见，陌生人。")] }
       ] },
       { id: "themoon", x: 43, y: 12, w: 14, h: 24, label: "月亮", verb: "举起收音机", talk: [
-        { when: "count<38", do: [
+        { when: "count<27", do: [
           S("radio", "……沙沙……沙……（指针在晃，但还差一点点）"),
           S("me", "还不够……收音机的耳朵，还没有养好。"),
-          { tipCount: 38 }
+          { tipCount: 27 }
         ] },
         { do: [
           S("me", "我把收音机举向月亮。"),

@@ -1,14 +1,14 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260926a";
-import * as A from "./audio.js?v=20260926a";
-import { FX, pixelWipe } from "./fx.js?v=20260926a";
-import { lineId } from "./voice-id.js?v=20260926a";
-import { TRACKS } from "./tracks.js?v=20260926a";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260926a";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260926b";
+import * as A from "./audio.js?v=20260926b";
+import { FX, pixelWipe } from "./fx.js?v=20260926b";
+import { lineId } from "./voice-id.js?v=20260926b";
+import { TRACKS } from "./tracks.js?v=20260926b";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260926b";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260926a";
+const V = "?v=20260926b";
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
@@ -162,10 +162,10 @@ async function travel(id, { instant = false } = {}) {
   closeAllPanels();
   A.sfx("tune");
   await pixelWipe(wipe, "in", instant ? 1 : 480);
-  await loadScene(id);
+  const first = await loadScene(id);
   await pixelWipe(wipe, "out", 520);
   busy = false;
-  try { await afterEnter(id); } finally { entering = false; }
+  try { await afterEnter(id, first); } finally { entering = false; }
 }
 
 async function loadScene(id) {
@@ -222,9 +222,9 @@ function finishHold() {
 }
 $("#skip").addEventListener("click", (e) => { e.stopPropagation(); finishHold(); });
 
-async function afterEnter(id) {
+async function afterEnter(id, first = true) {
   const sc = SCENE[id];
-  await showSceneCard(sc);
+  await showSceneCard(sc, !first);
   if (holdPlaying) await new Promise((r) => { const t = setInterval(() => { if (!holdPlaying) { clearInterval(t); r(); } }, 120); });
   if (!S.flags[`intro_${id}`]) {
     S.flags[`intro_${id}`] = true; save();
@@ -233,12 +233,13 @@ async function afterEnter(id) {
   renderHUD();
 }
 
-async function showSceneCard(sc) {
+async function showSceneCard(sc, quick = false) {
   const box = $("#scenecard");
   box.innerHTML = `<div class="sc-time">${tScene(sc, "time")}</div><div class="sc-name">${tScene(sc, "name")}</div><div class="sc-weather">${tScene(sc, "weather")}</div>`;
   box.classList.toggle("en", isEN());
+  box.classList.toggle("quick", quick);
   box.classList.remove("show"); void box.offsetWidth; box.classList.add("show");
-  await wait(1700);
+  await wait(quick ? 900 : 1700);
 }
 
 function prefetchNext() {
@@ -293,6 +294,7 @@ function renderHotspots() {
   const spots = [];
   current.hotspots.forEach((h, i) => {
     const b = el("button", "hs");
+    b.dataset.id = h.id;
     b.style.cssText = `left:${h.x}%;top:${h.y}%;width:${h.w}%;height:${h.h}%`;
     const pend = pendingCards(h).length || hasErrand(h);
     if (h.hidden) b.classList.add("secret");
@@ -356,11 +358,17 @@ function openDialog() { dialogOpen = true; dlg.classList.add("open"); app.classL
 function closeDialog() { dialogOpen = false; dlg.classList.remove("open"); app.classList.remove("talking"); A.duckMusic(listening ? 0.35 : 1); }
 
 // 横屏时对话框放在上方或下方：取和说话人（没有说话人时取本场景热点）重叠更少的一边
-const DLG_BOTTOM = [70, 97], DLG_TOP = [10.5, 37.5];
+const DLG_BOTTOM = [70, 97], DLG_TOP = [13, 40];
 function placeDialog(spot) {
   const boxes = spot ? [spot] : (current?.hotspots || []).filter((h) => !h.hidden);
   const overlap = ([a, b]) => boxes.reduce((s, h) => s + Math.max(0, Math.min(b, h.y + h.h) - Math.max(a, h.y)), 0);
-  dlg.classList.toggle("top", overlap(DLG_TOP) < overlap(DLG_BOTTOM));
+  const top = overlap(DLG_TOP) < overlap(DLG_BOTTOM);
+  dlg.classList.toggle("top", top);
+  if (top) {
+    const base = app.getBoundingClientRect().top;
+    const hudBottom = Math.max(...["#chip", "#counter"].map((s) => $(s).getBoundingClientRect().bottom)) - base;
+    dlg.style.setProperty("--dtop", `${Math.round(hudBottom + 8)}px`);
+  }
 }
 
 async function runDialog(steps, spot) {
@@ -458,6 +466,7 @@ function setSpeaker(who) {
 }
 
 let sayToken = 0;
+let autoAdvance = (() => { try { return localStorage.getItem(SAVE_KEY + "-auto") === "1"; } catch { return false; } })();
 function say(who, text) {
   const sp = setSpeaker(who);
   dChoices.innerHTML = "";
@@ -470,11 +479,12 @@ function say(who, text) {
   text = plain(shown);
   dlg.classList.toggle("en", isEN());
   return new Promise(async (resolve) => {
-    let i = 0, done = false, timer = 0, voice = null;
+    let i = 0, done = false, timer = 0, voice = null, next = null;
     dText.textContent = "";
     waveTalking = true;
     advance = null;
     if (vid) voice = await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(who) });
+    if (voice) window.__onVoice?.(vid, RADIO_VOICES.has(who));
     dlg.classList.toggle("speaking", Boolean(sp.portrait));
     // 有配音时，打字机与语音同步；停顿符号按语音节奏略微放慢
     const pauses = (text.match(/[，。！？…,.!?]/g) || []).length;
@@ -492,9 +502,16 @@ function say(who, text) {
     const finish = () => {
       done = true; clearTimeout(timer); dText.innerHTML = rich(shown); dlg.classList.add("ready");
       if (!voice) { waveTalking = false; dlg.classList.remove("speaking"); }
-      advance = () => { advance = null; if (voice) A.stopVoice(); dlg.classList.remove("speaking"); A.sfx("click"); resolve(); };
+      next = () => { advance = null; if (voice) A.stopVoice(); dlg.classList.remove("speaking"); A.sfx("click"); resolve(); };
+      advance = next;
     };
-    if (voice) voice.ended.then(() => { if (token !== sayToken) return; dlg.classList.remove("speaking"); waveTalking = false; });
+    if (voice) voice.ended.then(() => {
+      if (token !== sayToken) return;
+      dlg.classList.remove("speaking"); waveTalking = false;
+      if (!autoAdvance) return;
+      const go = () => { if (token !== sayToken) return; if (!done) return setTimeout(go, 200); setTimeout(() => { if (token === sayToken && next && advance === next) next(); }, 800); };
+      go();
+    });
     advance = () => finish();
   });
 }
@@ -1013,7 +1030,7 @@ async function makePostcard() {
   if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 60, H - 322, 256, 256); }
   g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText(T("像素上海：弄堂电台"), 330, H - 190);
   g.fillStyle = "#8a5a3c"; g.font = "26px Px, sans-serif";
-  g.fillText(T("一台老收音机，一天，七十三段上海闲话"), 330, H - 140);
+  g.fillText(T("一台老收音机，一天，一座城的闲话"), 330, H - 140);
   g.fillText("ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 96);
   return cv;
 }
@@ -1107,6 +1124,13 @@ async function showSoundMap() {
 // 语言：标题页与设置里的按钮；切换后刷新界面
 function syncLangButtons() { document.querySelectorAll(".lang-btn").forEach((b) => b.classList.toggle("on", b.dataset.lang === getLang())); }
 document.querySelectorAll(".lang-btn").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); A.initAudio(); A.sfx("click"); setLang(b.dataset.lang); }));
+function syncAutoButtons() { document.querySelectorAll(".auto-btn").forEach((b) => b.classList.toggle("on", (b.dataset.auto === "1") === autoAdvance)); }
+document.querySelectorAll(".auto-btn").forEach((b) => b.addEventListener("click", (e) => {
+  e.stopPropagation(); A.sfx("click"); autoAdvance = b.dataset.auto === "1";
+  try { localStorage.setItem(SAVE_KEY + "-auto", autoAdvance ? "1" : "0"); } catch {}
+  syncAutoButtons();
+}));
+syncAutoButtons();
 onLang(() => {
   syncLangButtons();
   showTitle();
