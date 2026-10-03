@@ -4,6 +4,8 @@
 
 Live site: [ringhyacinth.github.io/hyacinth.im-site](https://ringhyacinth.github.io/hyacinth.im-site/)
 
+Standalone proposal: [爱丽丝花园 · PICO](https://ringhyacinth.github.io/hyacinth.im-site/alice-garden-pico/) — responsive reading layout with four original prototype animations.
+
 ![3D portfolio plaza overview](docs/media/homepage-overview.png)
 
 ![Short plaza loop](docs/media/plaza-loop.gif)

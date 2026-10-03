@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- 可编辑源文件：直接改这里的文字，双击用浏览器打开就能预览。改完运行同目录的「打包成单文件.py」生成单文件版。 -->
+<title>爱丽丝花园 · PICO MR / VR 提案</title>
+<meta name="description" content="在家里的茶几上，种植一座会说话的花园。海辛与阿文的 PICO MR / VR 互动花园提案。">
+<style>
+/* Layout: one storybook plate per printed page — page 1 says what it is and how it lives in a room,
+   page 2 shows it moving and who will come to visit. The game's own palette and display face. */
+@font-face{font-family:"XiaoWei";src:url("media/display.woff2") format("woff2");font-display:swap;unicode-range:U+0-56DD,U+56DF-10FFFF}
+:root{
+  --paper:#FBF6E8; --plate:#F4EDDB; --ink:#221E35; --ink-2:#5B566B; --rule:#D8CDB5;
+  --lily:#E2602F; --leaf:#6E8A6A;
+  --display:"XiaoWei","Songti SC","STSong",serif;
+  --body:"XiaoWei","Noto Serif SC","Songti SC","STSong",serif;
+  --latin:"IM Fell English",Georgia,serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.75;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet{max-width:1060px;margin:0 auto;padding-inline:clamp(16px,4vw,48px);padding-block:40px 56px;display:grid;grid-template-columns:minmax(0,1fr);gap:44px}
+.page{display:grid;grid-template-columns:minmax(0,1fr);gap:40px;min-width:0}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+p{margin:0}
+.eyebrow{font-family:var(--latin);font-size:13px;letter-spacing:.14em;color:var(--lily);text-transform:uppercase}
+h2{font-size:26px;letter-spacing:.06em;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacing:.02em;color:var(--ink-2)}
+.sec{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-content:start;min-width:0}
+.rule{height:0;border-top:1.5px solid var(--ink);position:relative}
+.rule::after{content:"";position:absolute;left:0;right:0;top:3px;border-top:.75px solid var(--ink)}
+
+/* title plate */
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end}
+.head h1{font-size:clamp(56px,9vw,96px);line-height:1;letter-spacing:.08em}
+.head .en{font-family:var(--latin);font-style:italic;font-size:22px;color:var(--ink-2);margin-top:6px}
+.lede{font-size:18px;line-height:1.85;max-width:34em;margin-top:18px}
+.facts{display:grid;grid-template-columns:auto auto;gap:6px 16px;font-size:13px;color:var(--ink-2);border-left:1.5px solid var(--ink);padding-left:16px;align-self:end}
+.facts b{font-weight:400;font-family:var(--display);color:var(--ink);letter-spacing:.08em}
+
+/* what & how */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:40px}
+.verbs{display:grid;gap:12px}
+.verb{display:grid;grid-template-columns:6.6em minmax(0,1fr);gap:12px;align-items:baseline}
+.verb b{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.06em;color:var(--lily);white-space:nowrap}
+
+/* three sizes */
+.sizes{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:start}
+.size{display:grid;gap:8px;min-width:0;align-content:start}
+.size figure{margin:0;border:1.5px solid var(--ink);box-shadow:0 0 0 4px var(--paper),0 0 0 5px var(--ink);aspect-ratio:16/9;overflow:hidden;background:var(--plate)}
+.size img{width:100%;height:100%;object-fit:cover;display:block}
+.size .tag{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.size .tag b{font-family:var(--display);font-weight:400;font-size:19px;letter-spacing:.05em}
+.size .tag span{font-family:var(--latin);font-size:12px;letter-spacing:.12em;color:var(--lily)}
+.size p{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.arrow{align-self:center;margin-top:-40px;display:grid;justify-items:center;gap:2px;font-size:12px;color:var(--ink-2);text-align:center;width:4.6em;line-height:1.4}
+.arrow svg{width:36px;height:14px}
+
+/* real-world surprises */
+.surprise{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--plate);border:1px solid var(--rule);padding:16px 18px 18px;display:grid;gap:6px;align-content:start}
+.card.lead{border-color:var(--ink);background:var(--paper)}
+.card b{font-family:var(--display);font-weight:400;font-size:19px;letter-spacing:.05em}
+.card p{font-size:13.5px;line-height:1.75}
+.note{font-size:12px;color:var(--ink-2)}
+
+/* moments */
+.moments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 24px}
+.moment{display:grid;gap:10px;min-width:0;align-content:start}
+.moment .frame{position:relative;aspect-ratio:16/9;border:1.5px solid var(--ink);box-shadow:0 0 0 4px var(--paper),0 0 0 5px var(--ink);overflow:hidden;background:var(--plate)}
+.moment video,.moment .frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.moment video{z-index:1}
+.moment h3{font-size:20px;letter-spacing:.05em}
+.moment p{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.moment .cap{display:grid;gap:2px}
+
+/* visitors */
+.cast{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:10px}
+.who{display:grid;grid-template-rows:auto auto auto;align-content:start;gap:4px;justify-items:center;text-align:center;min-width:0}
+.who .pic{height:152px;width:100%;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--rule);padding-bottom:6px}
+.who img{max-height:100%;max-width:100%;object-fit:contain;display:block}
+.who b{font-family:var(--display);font-weight:400;font-size:16px;letter-spacing:.05em;margin-top:4px}
+.who span{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.who.mystery b{color:var(--lily)}
+.foot{font-size:12.5px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px 18px;border-top:1px solid var(--rule);padding-top:12px}
+
+@media screen and (max-width:820px){
+  .head,.two{grid-template-columns:minmax(0,1fr)}
+  .head h1{font-size:52px}
+  .sizes{grid-template-columns:minmax(0,1fr)}
+  .arrow{margin:0;width:auto;grid-auto-flow:column;gap:8px}
+  .arrow svg{transform:rotate(90deg)}
+  .surprise,.moments{grid-template-columns:1fr}
+  .cast{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 10px}
+}
+
+
+/* print / PDF: two A4 plates, posters in place of video */
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:var(--paper)}
+  body{font-size:9.6pt;line-height:1.65}
+  .sheet{max-width:none;padding:0;gap:0}
+  .page{gap:7mm;height:297mm;padding:12mm 13mm;overflow:hidden;align-content:start;page-break-after:always;break-after:page;break-inside:avoid}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  .head h1{font-size:46pt}
+  .head .en{font-size:13pt}
+  .lede{font-size:11pt;margin-top:3mm}
+  .facts{font-size:8.4pt}
+  h2{font-size:15pt} h2 small{font-size:9.5pt}
+  .sec{gap:3.2mm}
+  .two{gap:9mm}
+  .verb b{font-size:12pt}
+  .size .tag b,.card b{font-size:12pt}
+  .size p,.card p,.moment p{font-size:8.6pt}
+  .arrow{font-size:7.6pt;margin-top:-8mm}
+  .card{padding:3mm 3.6mm}
+  .moments{gap:5mm 5mm}
+  .moment h3{font-size:12pt}
+  video{display:none!important}
+  .cast{grid-template-columns:repeat(9,minmax(0,1fr));gap:2mm}
+  .who .pic{height:30mm}
+  .who b{font-size:10pt} .who span{font-size:7.2pt}
+  .note,.foot{font-size:7.8pt}
+}
+
+/* Final user-approved wording, one A4 page. */
+@media print{
+ @page{size:A4;margin:0}
+ body{font-size:7.7pt;line-height:1.5}
+ .sheet{display:flex;flex-direction:column;gap:3.6mm;padding:10mm 11mm;min-height:297mm;background:var(--paper)}
+ .page{display:contents;height:auto;padding:0;overflow:visible;break-after:auto;page-break-after:auto}
+ .head{grid-template-columns:minmax(0,1fr) auto;gap:6mm}
+ .head h1{font-size:32pt;letter-spacing:.08em}
+ .head .en{font-size:10pt;margin-top:1mm}
+ .eyebrow{font-size:7pt;letter-spacing:.1em}
+ .lede{font-size:9pt;line-height:1.5;margin-top:2mm}
+ .facts{font-size:6.8pt;gap:1mm 3mm;padding-left:3mm}
+ h2{font-size:11pt;gap:2mm}h2 small{font-size:7pt}
+ .sec{gap:2mm}.two{gap:6mm}.verbs{gap:2mm}
+ .verb{grid-template-columns:5.5em 1fr;gap:2mm}.verb b{font-size:9pt}
+ .sizes{gap:2mm}.size{gap:1.3mm}.size .tag{margin-top:1mm;gap:2mm}
+ .size .tag b,.card b{font-size:9pt}.size .tag span{font-size:7pt}
+ .size p,.card p,.moment p{font-size:7pt;line-height:1.45}
+ .arrow{font-size:6pt;width:3.8em;margin-top:-5mm}
+ .surprise{gap:2mm}.card{padding:2mm;gap:1mm}
+ .note{font-size:6.4pt;line-height:1.4}
+ .moments{grid-template-columns:repeat(4,minmax(0,1fr));gap:2.5mm}
+ .moment{gap:2mm}.moment h3{font-size:8.2pt;letter-spacing:0}
+ .cast{gap:1.5mm}.who{gap:.7mm}.who .pic{height:23mm;padding-bottom:1mm}
+ .who b{font-size:8pt;margin-top:.5mm}.who span{font-size:6.2pt;line-height:1.35}
+ .size figure,.moment .frame{box-shadow:none;border-width:.6pt}
+ .rule{border-width:.7pt}.rule::after{top:2px;border-width:.4pt}
+}
+
+/* Larger cast, five above and four centered below. */
+.prototype-video{position:static!important;inset:auto!important;height:auto!important;width:100%!important;display:block;margin-top:8px}
+.prototype-link summary{cursor:pointer}
+.prototype-link{font-size:11px;color:var(--ink-2);text-decoration:underline}
+.visual-note{font-size:11px;color:var(--ink-2);line-height:1.4}
+@media screen and (min-width:821px){
+ .cast{grid-template-columns:repeat(10,minmax(0,1fr));gap:22px 14px}
+ .who{grid-column:span 2}.who:nth-child(6){grid-column:2/span 2}
+ .who .pic{height:190px}
+}
+@media print{
+ .sheet{gap:2mm}
+ .sec{gap:1.2mm}
+ .head h1{font-size:30pt}
+ .cast{grid-template-columns:repeat(10,minmax(0,1fr));gap:1.8mm 2mm}
+ .who{grid-column:span 2}.who:nth-child(6){grid-column:2/span 2}
+ .who .pic{height:27mm}.who b{font-size:8pt}.who span{font-size:6.5pt}
+ .prototype-link{display:none}.visual-note{font-size:6.2pt;line-height:1.3}
+}
+
+/* Phone reading layout; print styles remain unchanged. */
+@media screen and (max-width:600px){
+ body{font-size:16px;line-height:1.85}
+ .sheet{padding:28px 22px 40px;gap:32px}
+ .page{gap:30px}.head{gap:20px}.two{gap:28px}
+ .head h1{font-size:clamp(32px,10vw,52px);letter-spacing:.04em}
+ .head .en{font-size:20px}.eyebrow{font-size:11px;letter-spacing:.06em}
+ .lede{font-size:17px;margin-top:14px}.facts{font-size:13px;justify-self:start;gap:6px 12px}
+ h2{font-size:23px;line-height:1.5;gap:2px 10px}h2 small{font-size:13px}
+ .sec{gap:16px}.verb{grid-template-columns:5.4em minmax(0,1fr);gap:8px}.verb b{font-size:19px}
+ .sizes{gap:18px}.size{gap:8px}.size p,.card p,.moment p{font-size:15px}
+ .arrow{justify-self:center}.moments{gap:28px}.note{font-size:13px}
+ .cast{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 16px}
+ .who .pic{height:190px}.who b{font-size:18px}.who span{font-size:13px}
+ .who:last-child{grid-column:1/-1;width:calc((100% - 16px)/2);justify-self:center}
+}
+
+</style>
+
+</head><body>
+<main class="sheet">
+  <section class="page">
+    <header class="head">
+      <div>
+        <div class="eyebrow">A PROPOSAL FOR PICO · MR / VR · 海辛 &amp; 阿文</div>
+        <h1>爱丽丝花园</h1>
+        <div class="en">Alice's Garden</div>
+        <p class="lede">在家里的茶几上，种植一座会说话的花园。<br></p>
+      </div>
+      <div class="facts">
+        <b>类型</b><span>MR 治愈种植</span>
+        <b>平台</b><span>Pico MR + VR</span>
+        <b>节奏</b><span>每天 10–20 分钟，没有失败</span>
+        <b>题材</b><span>卡罗尔《爱丽丝梦游仙境》</span>
+      </div>
+    </header>
+
+    <div class="rule"></div>
+
+    <div class="two">
+      <section class="sec">
+        <h2>游戏是什么 <small>What it is</small></h2>
+        <p>玩家可以在自己的房间里，栽培一座通往爱丽丝世界的花园。<br>每支花都各有性格，花园长成什么样，决定谁会来拜访。<br>像《星露谷物语》《宝可梦 Pokopia》那样慢慢经营；<br>像《塞尔达》那样随时有新发现。</p>
+      </section>
+      <section class="sec">
+        <h2>怎么玩 <small>Three verbs</small></h2>
+        <div class="verbs">
+          <div class="verb"><b>拉花</b><span>捏住种子往上拉，花茎沿着手的轨迹长出来，开口说话。</span></div>
+          <div class="verb"><b>变大变小</b><span>玩家可以像爱丽丝一样变小，成为自己花园里的居民。</span></div>
+          <div class="verb"><b>等人来</b><span>花园的样子吸引不同的原著角色。</span></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="sec">
+      <h2>在 MR 和 VR 里：一座花园，三种大小 <small>One garden, three sizes</small></h2>
+      <div class="sizes">
+        <div class="size">
+          <figure><img loading="lazy" decoding="async" src="media/desk-mr-v2.webp" alt="茶几上的一盆花园"></figure>
+          <div class="tag"><b>桌上一盆</b><span>MR</span></div>
+          <p>花园长在真实的茶几上，绕着看，俯身种花。</p>
+        </div>
+        <div class="arrow"><svg viewBox="0 0 36 14" aria-hidden="true"><path d="M1 7h32M27 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>咬一口<br>左边蘑菇</div>
+        <div class="size">
+          <figure><img loading="lazy" decoding="async" src="media/room-mr-v4.webp" alt="花园铺满客厅，花比沙发高"></figure>
+          <div class="tag"><b>铺满客厅</b><span>MR</span></div>
+          <p>花园漫到地板，在沙发和桌腿之间穿过花丛。</p>
+        </div>
+        <div class="arrow"><svg viewBox="0 0 36 14" aria-hidden="true"><path d="M1 7h32M27 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>跳进<br>兔子洞</div>
+        <div class="size">
+          <figure><img loading="lazy" decoding="async" src="media/deep-game-v3.webp" alt="爱丽丝大小的花丛深处"></figure>
+          <div class="tag"><b>花丛深处</b><span>VR</span></div>
+          <p>你变成爱丽丝的大小，进入花园。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>现实里的惊喜 <small>The room joins the story</small></h2>
+      <div class="surprise">
+        <div class="card lead"><b>拿一面镜子照一照</b><p>真镜子对着花园，镜中会爬出一位新角色，跳进花园里。</p></div>
+        <div class="card"><b>傍晚六点的茶会</b><p>六点打开游戏，帽匠和三月兔已经在你的茶几边摆好茶会：他们的钟永远停在六点。</p></div>
+        <div class="card"><b>关掉房间的灯</b><p>房间暗下来，花园进入夜晚；柴郡猫的笑容挂在你的书架上，一眨眼又不见了。</p></div>
+      </div>
+      <p class="note">镜子与灯光需要识别现实画面，可用的识别能力与 Pico 一起确认；做不到时，用房间扫描标出的镜面和窗户代替。</p>
+    </section>
+  </section>
+
+  <section class="page">
+    <section class="sec">
+      <h2>美术示意：四个瞬间 <small>Four moments in the garden</small></h2>
+
+      <div class="moments">
+        <article class="moment">
+          <div class="frame"><video src="media/pull.mp4" poster="media/pull.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/pull.webp" alt="卷丹从种子里长出来并开口说话"></div>
+          <div class="cap"><h3>从种子里拉出一朵花</h3><p>手往哪儿走，花茎就往哪儿长；开花之后，卷丹开口说话。</p></div>
+        </article>
+        <article class="moment">
+          <div class="frame"><video src="media/dew.mp4" poster="media/dew.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/dew.webp" alt="露珠挂在五根草茎上，像一行五线谱"></div>
+          <div class="cap"><h3>露水五线谱</h3><p>拨动草茎，露珠落成音符；花儿把这句调子唱回来。</p></div>
+        </article>
+        <article class="moment">
+          <div class="frame"><video src="media/sing.mp4" poster="media/sing.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/sing.webp" alt="金色午后，花儿按歌词合唱"></div>
+          <div class="cap"><h3>金色午后的合唱</h3><p>跟着拍子指挥，花儿一字一字地唱，金光从叶间斜照下来。</p></div>
+        </article>
+        <article class="moment">
+          <div class="frame"><video src="media/orbit.mp4" poster="media/orbit.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/orbit.webp" alt="茶几上的花园，镜头绕着它转一圈"></div>
+          <div class="cap"><h3>绕着花园走一圈</h3><p>花园是真实的立体模型，可以绕着茶几走，从每个角度看。</p></div>
+        </article>
+      </div>
+
+    </section>
+
+    <section class="sec">
+      <h2>会来做客的人 <small>Who will visit</small></h2>
+      <div class="cast">
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-rabbit-nbp.webp" alt=""></div><b>白兔</b><span>铺出一条小路</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-caterpillar-nbp.webp" alt=""></div><b>毛毛虫</b><span>种出一片蘑菇</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-cheshire-nbp.webp" alt=""></div><b>柴郡猫</b><span>关掉房间的灯</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-hatter-nbp.webp" alt=""></div><b>帽匠</b><span>傍晚六点摆茶桌</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-hare-nbp.webp" alt=""></div><b>三月兔</b><span>跟着帽匠来喝茶</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-dormouse-nbp.webp" alt=""></div><b>睡鼠</b><span>茶会上留只茶壶</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-pigeon-nbp.webp" alt=""></div><b>鸽子</b><span>把自己变到最大</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-queen-nbp.webp" alt=""></div><b>红皇后</b><span>花园又大又整齐</span></div>
+        <div class="who mystery"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-mirror-nbp.webp" alt="镜中来客手镜"></div><b>镜中来客</b><span>拿真镜子照一照</span></div>
+      </div>
+    </section>
+
+
+  </section>
+</main>
+<script>
+/* Only animate visible clips. Native controls remain available on phones. */
+(() => {
+ const videos=[...document.querySelectorAll('.moment .frame video')];
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ const visible=new Set();
+ const play=v=>{if(document.hidden||reduced.matches)return;v.play().catch(()=>{});};
+ const observer=new IntersectionObserver(entries=>entries.forEach(({target,isIntersecting})=>{
+   if(isIntersecting){visible.add(target);play(target);}else{visible.delete(target);target.pause();}
+ }),{threshold:.2});
+ videos.forEach(v=>observer.observe(v));
+ document.addEventListener('visibilitychange',()=>videos.forEach(v=>document.hidden?v.pause():visible.has(v)&&play(v)));
+ reduced.addEventListener('change',()=>videos.forEach(v=>reduced.matches?v.pause():visible.has(v)&&play(v)));
+})();
+</script>
+
+</body></html>
