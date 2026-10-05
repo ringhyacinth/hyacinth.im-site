@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- 可编辑源文件：直接改这里的文字，双击用浏览器打开就能预览。改完运行同目录的「打包成单文件.py」生成单文件版。 -->
-<title>爱丽丝花园 · PICO MR / VR 提案</title>
-<meta name="description" content="在家里的茶几上，种植一座会说话的花园。海辛与阿文的 PICO MR / VR 互动花园提案。">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Editable source: edit the text here and open this file in a browser to preview. -->
+<title>Alice’s Garden · PICO MR / VR Proposal</title>
+<meta name="description" content="Grow a talking garden on your coffee table. A PICO MR / VR interactive garden proposal by Ring Hyacinth and Simon Lee.">
 <style>
 /* Layout: one storybook plate per printed page — page 1 says what it is and how it lives in a room,
    page 2 shows it moving and who will come to visit. The game's own palette and display face. */
@@ -10,8 +10,8 @@
 :root{
   --paper:#FBF6E8; --plate:#F4EDDB; --ink:#221E35; --ink-2:#5B566B; --rule:#D8CDB5;
   --lily:#E2602F; --leaf:#6E8A6A;
-  --display:"XiaoWei","Songti SC","STSong",serif;
-  --body:"XiaoWei","Noto Serif SC","Songti SC","STSong",serif;
+  --display:Georgia,"Times New Roman",serif;
+  --body:Georgia,"Times New Roman",serif;
   --latin:"IM Fell English",Georgia,serif;
   color-scheme:light;
 }
@@ -32,7 +32,7 @@ h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacin
 
 /* title plate */
 .head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end}
-.head h1{font-size:clamp(56px,9vw,96px);line-height:1;letter-spacing:.08em}
+.head h1{font-size:clamp(40px,6vw,68px);line-height:1.1;letter-spacing:.01em}
 .head .en{font-family:var(--latin);font-style:italic;font-size:22px;color:var(--ink-2);margin-top:6px}
 .lede{font-size:18px;line-height:1.85;max-width:34em;margin-top:18px}
 .facts{display:grid;grid-template-columns:auto auto;gap:6px 16px;font-size:13px;color:var(--ink-2);border-left:1.5px solid var(--ink);padding-left:16px;align-self:end}
@@ -41,7 +41,7 @@ h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacin
 /* what & how */
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:40px}
 .verbs{display:grid;gap:12px}
-.verb{display:grid;grid-template-columns:6.6em minmax(0,1fr);gap:12px;align-items:baseline}
+.verb{display:grid;grid-template-columns:8em minmax(0,1fr);gap:12px;align-items:baseline}
 .verb b{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.06em;color:var(--lily);white-space:nowrap}
 
 /* three sizes */
@@ -138,7 +138,7 @@ h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacin
  .facts{font-size:6.8pt;gap:1mm 3mm;padding-left:3mm}
  h2{font-size:11pt;gap:2mm}h2 small{font-size:7pt}
  .sec{gap:2mm}.two{gap:6mm}.verbs{gap:2mm}
- .verb{grid-template-columns:5.5em 1fr;gap:2mm}.verb b{font-size:9pt}
+ .verb{grid-template-columns:7.5em 1fr;gap:2mm}.verb b{font-size:9pt}
  .sizes{gap:2mm}.size{gap:1.3mm}.size .tag{margin-top:1mm;gap:2mm}
  .size .tag b,.card b{font-size:9pt}.size .tag span{font-size:7pt}
  .size p,.card p,.moment p{font-size:7pt;line-height:1.45}
@@ -182,7 +182,7 @@ h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacin
  .head .en{font-size:20px}.eyebrow{font-size:11px;letter-spacing:.06em}
  .lede{font-size:17px;margin-top:14px}.facts{font-size:13px;justify-self:start;gap:6px 12px}
  h2{font-size:23px;line-height:1.5;gap:2px 10px}h2 small{font-size:13px}
- .sec{gap:16px}.verb{grid-template-columns:5.4em minmax(0,1fr);gap:8px}.verb b{font-size:19px}
+ .sec{gap:16px}.verb{grid-template-columns:7em minmax(0,1fr);gap:8px}.verb b{font-size:19px}
  .sizes{gap:18px}.size{gap:8px}.size p,.card p,.moment p{font-size:15px}
  .arrow{justify-self:center}.moments{gap:28px}.note{font-size:13px}
  .cast{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 16px}
@@ -197,16 +197,16 @@ h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacin
   <section class="page">
     <header class="head">
       <div>
-        <div class="eyebrow">A PROPOSAL FOR PICO · MR / VR · 海辛 &amp; 阿文</div>
-        <h1>爱丽丝花园</h1>
-        <div class="en">Alice's Garden</div>
-        <p class="lede">在家里的茶几上，种植一座会说话的花园。<br></p>
+        <div class="eyebrow">A PROPOSAL FOR PICO · MR / VR · Ring Hyacinth &amp; Simon Lee</div>
+        <h1>Alice’s Garden</h1>
+        <div class="en">A talking garden in your room</div>
+        <p class="lede">Grow a talking garden on your coffee table.<br></p>
       </div>
       <div class="facts">
-        <b>类型</b><span>MR 治愈种植</span>
-        <b>平台</b><span>Pico MR + VR</span>
-        <b>节奏</b><span>每天 10–20 分钟，没有失败</span>
-        <b>题材</b><span>卡罗尔《爱丽丝梦游仙境》</span>
+        <b>Genre</b><span>Cozy MR gardening</span>
+        <b>Platform</b><span>PICO MR + VR</span>
+        <b>Pace</b><span>10–20 minutes a day; no failure states</span>
+        <b>Inspiration</b><span>Lewis Carroll’s Alice in Wonderland</span>
       </div>
     </header>
 
@@ -214,90 +214,90 @@ h2 small{font-family:var(--latin);font-style:italic;font-size:15px;letter-spacin
 
     <div class="two">
       <section class="sec">
-        <h2>游戏是什么 <small>What it is</small></h2>
-        <p>玩家可以在自己的房间里，栽培一座通往爱丽丝世界的花园。<br>每支花都各有性格，花园长成什么样，决定谁会来拜访。<br>像《星露谷物语》《宝可梦 Pokopia》那样慢慢经营；<br>像《塞尔达》那样随时有新发现。</p>
+        <h2>What it is</h2>
+        <p>Cultivate a garden in your own room that opens into Alice’s world. Each flower has its own personality, and the garden you grow determines who visits. Tend it at your own pace, as in Stardew Valley or Pokémon Pokopia, with discoveries around every corner, as in The Legend of Zelda.</p>
       </section>
       <section class="sec">
-        <h2>怎么玩 <small>Three verbs</small></h2>
+        <h2>How to play <small>Three simple actions</small></h2>
         <div class="verbs">
-          <div class="verb"><b>拉花</b><span>捏住种子往上拉，花茎沿着手的轨迹长出来，开口说话。</span></div>
-          <div class="verb"><b>变大变小</b><span>玩家可以像爱丽丝一样变小，成为自己花园里的居民。</span></div>
-          <div class="verb"><b>等人来</b><span>花园的样子吸引不同的原著角色。</span></div>
+          <div class="verb"><b>Grow</b><span>Pinch a seed and pull upward. A stem follows your hand, then blossoms and speaks.</span></div>
+          <div class="verb"><b>Change size</b><span>Shrink like Alice and become a resident of your own garden.</span></div>
+          <div class="verb"><b>Welcome</b><span>Your garden’s character attracts different visitors from the original story.</span></div>
         </div>
       </section>
     </div>
 
     <section class="sec">
-      <h2>在 MR 和 VR 里：一座花园，三种大小 <small>One garden, three sizes</small></h2>
+      <h2>One garden, three sizes <small>From MR to VR</small></h2>
       <div class="sizes">
         <div class="size">
-          <figure><img loading="lazy" decoding="async" src="media/desk-mr-v2.webp" alt="茶几上的一盆花园"></figure>
-          <div class="tag"><b>桌上一盆</b><span>MR</span></div>
-          <p>花园长在真实的茶几上，绕着看，俯身种花。</p>
+          <figure><img loading="lazy" decoding="async" src="media/desk-mr-v2.webp" alt="A miniature garden on a coffee table"></figure>
+          <div class="tag"><b>On the tabletop</b><span>MR</span></div>
+          <p>Grow a garden on your real coffee table. Walk around it and lean in to plant flowers.</p>
         </div>
-        <div class="arrow"><svg viewBox="0 0 36 14" aria-hidden="true"><path d="M1 7h32M27 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>咬一口<br>左边蘑菇</div>
+        <div class="arrow"><svg viewBox="0 0 36 14" aria-hidden="true"><path d="M1 7h32M27 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Bite the<br>left mushroom</div>
         <div class="size">
-          <figure><img loading="lazy" decoding="async" src="media/room-mr-v4.webp" alt="花园铺满客厅，花比沙发高"></figure>
-          <div class="tag"><b>铺满客厅</b><span>MR</span></div>
-          <p>花园漫到地板，在沙发和桌腿之间穿过花丛。</p>
+          <figure><img loading="lazy" decoding="async" src="media/room-mr-v4.webp" alt="A garden fills the living room, with flowers taller than the sofa"></figure>
+          <div class="tag"><b>Across the room</b><span>MR</span></div>
+          <p>The garden spreads across the floor. Walk among flowers between your sofa and table legs.</p>
         </div>
-        <div class="arrow"><svg viewBox="0 0 36 14" aria-hidden="true"><path d="M1 7h32M27 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>跳进<br>兔子洞</div>
+        <div class="arrow"><svg viewBox="0 0 36 14" aria-hidden="true"><path d="M1 7h32M27 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Down the<br>rabbit hole</div>
         <div class="size">
-          <figure><img loading="lazy" decoding="async" src="media/deep-game-v3.webp" alt="爱丽丝大小的花丛深处"></figure>
-          <div class="tag"><b>花丛深处</b><span>VR</span></div>
-          <p>你变成爱丽丝的大小，进入花园。</p>
+          <figure><img loading="lazy" decoding="async" src="media/deep-game-v3.webp" alt="Deep among the flowers at Alice’s tiny scale"></figure>
+          <div class="tag"><b>Among the flowers</b><span>VR</span></div>
+          <p>Shrink to Alice’s size and step inside the garden.</p>
         </div>
       </div>
     </section>
 
     <section class="sec">
-      <h2>现实里的惊喜 <small>The room joins the story</small></h2>
+      <h2>The room joins the story</h2>
       <div class="surprise">
-        <div class="card lead"><b>拿一面镜子照一照</b><p>真镜子对着花园，镜中会爬出一位新角色，跳进花园里。</p></div>
-        <div class="card"><b>傍晚六点的茶会</b><p>六点打开游戏，帽匠和三月兔已经在你的茶几边摆好茶会：他们的钟永远停在六点。</p></div>
-        <div class="card"><b>关掉房间的灯</b><p>房间暗下来，花园进入夜晚；柴郡猫的笑容挂在你的书架上，一眨眼又不见了。</p></div>
+        <div class="card lead"><b>Hold up a mirror</b><p>Point a real mirror at the garden. A new character climbs out of its reflection and leaps inside.</p></div>
+        <div class="card"><b>Tea at six</b><p>Open the game at 6 p.m. and find the Hatter and March Hare ready for tea beside your coffee table. Their clock is always stuck at six.</p></div>
+        <div class="card"><b>Turn out the lights</b><p>As your room darkens, night falls in the garden. The Cheshire Cat’s grin appears on your bookshelf, then vanishes in a blink.</p></div>
       </div>
-      <p class="note">镜子与灯光需要识别现实画面，可用的识别能力与 Pico 一起确认；做不到时，用房间扫描标出的镜面和窗户代替。</p>
+      <p class="note">Mirror and lighting interactions depend on real-world visual recognition, with available capabilities to be confirmed with PICO. A fallback would use mirror and window locations marked in a room scan.</p>
     </section>
   </section>
 
   <section class="page">
     <section class="sec">
-      <h2>美术示意：四个瞬间 <small>Four moments in the garden</small></h2>
+      <h2>Four moments in the garden <small>Visual concepts</small></h2>
 
       <div class="moments">
         <article class="moment">
-          <div class="frame"><video src="media/pull.mp4" poster="media/pull.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/pull.webp" alt="卷丹从种子里长出来并开口说话"></div>
-          <div class="cap"><h3>从种子里拉出一朵花</h3><p>手往哪儿走，花茎就往哪儿长；开花之后，卷丹开口说话。</p></div>
+          <div class="frame"><video src="media/pull.mp4" poster="media/pull.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/pull.webp" alt="Tiger Lily grows from a seed and begins to speak"></div>
+          <div class="cap"><h3>Pull a flower from a seed</h3><p>The stem follows your hand. When the flower blooms, Tiger Lily begins to speak.</p></div>
         </article>
         <article class="moment">
-          <div class="frame"><video src="media/dew.mp4" poster="media/dew.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/dew.webp" alt="露珠挂在五根草茎上，像一行五线谱"></div>
-          <div class="cap"><h3>露水五线谱</h3><p>拨动草茎，露珠落成音符；花儿把这句调子唱回来。</p></div>
+          <div class="frame"><video src="media/dew.mp4" poster="media/dew.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/dew.webp" alt="Dewdrops hang on five blades of grass like notes on a musical staff"></div>
+          <div class="cap"><h3>A score of dewdrops</h3><p>Pluck the grass: dewdrops fall as musical notes, and the flowers sing the melody back.</p></div>
         </article>
         <article class="moment">
-          <div class="frame"><video src="media/sing.mp4" poster="media/sing.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/sing.webp" alt="金色午后，花儿按歌词合唱"></div>
-          <div class="cap"><h3>金色午后的合唱</h3><p>跟着拍子指挥，花儿一字一字地唱，金光从叶间斜照下来。</p></div>
+          <div class="frame"><video src="media/sing.mp4" poster="media/sing.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/sing.webp" alt="Flowers sing together in the golden afternoon light"></div>
+          <div class="cap"><h3>A golden afternoon chorus</h3><p>Conduct to the beat as the flowers sing, word by word, with golden light filtering through their leaves.</p></div>
         </article>
         <article class="moment">
-          <div class="frame"><video src="media/orbit.mp4" poster="media/orbit.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/orbit.webp" alt="茶几上的花园，镜头绕着它转一圈"></div>
-          <div class="cap"><h3>绕着花园走一圈</h3><p>花园是真实的立体模型，可以绕着茶几走，从每个角度看。</p></div>
+          <div class="frame"><video src="media/orbit.mp4" poster="media/orbit.webp" muted loop playsinline controls preload="none"></video><img loading="lazy" decoding="async" src="media/orbit.webp" alt="The camera circles a garden on a coffee table"></div>
+          <div class="cap"><h3>Walk around the garden</h3><p>The garden is a 3D model. Walk around the coffee table and see it from every angle.</p></div>
         </article>
       </div>
 
     </section>
 
     <section class="sec">
-      <h2>会来做客的人 <small>Who will visit</small></h2>
+      <h2>Who will visit</h2>
       <div class="cast">
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-rabbit-nbp.webp" alt=""></div><b>白兔</b><span>铺出一条小路</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-caterpillar-nbp.webp" alt=""></div><b>毛毛虫</b><span>种出一片蘑菇</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-cheshire-nbp.webp" alt=""></div><b>柴郡猫</b><span>关掉房间的灯</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-hatter-nbp.webp" alt=""></div><b>帽匠</b><span>傍晚六点摆茶桌</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-hare-nbp.webp" alt=""></div><b>三月兔</b><span>跟着帽匠来喝茶</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-dormouse-nbp.webp" alt=""></div><b>睡鼠</b><span>茶会上留只茶壶</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-pigeon-nbp.webp" alt=""></div><b>鸽子</b><span>把自己变到最大</span></div>
-        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-queen-nbp.webp" alt=""></div><b>红皇后</b><span>花园又大又整齐</span></div>
-        <div class="who mystery"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-mirror-nbp.webp" alt="镜中来客手镜"></div><b>镜中来客</b><span>拿真镜子照一照</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-rabbit-nbp.webp" alt=""></div><b>White Rabbit</b><span>Lay a little path</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-caterpillar-nbp.webp" alt=""></div><b>Caterpillar</b><span>Grow a mushroom patch</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-cheshire-nbp.webp" alt=""></div><b>Cheshire Cat</b><span>Turn out the lights</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-hatter-nbp.webp" alt=""></div><b>Hatter</b><span>Set the table at six</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-hare-nbp.webp" alt=""></div><b>March Hare</b><span>Joins the Hatter for tea</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-dormouse-nbp.webp" alt=""></div><b>Dormouse</b><span>Leave a teapot at the party</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-pigeon-nbp.webp" alt=""></div><b>Pigeon</b><span>Grow to your largest size</span></div>
+        <div class="who"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-queen-nbp.webp" alt=""></div><b>Red Queen</b><span>Keep a grand, tidy garden</span></div>
+        <div class="who mystery"><div class="pic"><img loading="lazy" decoding="async" src="media/cast-mirror-nbp.webp" alt="A hand mirror for a mysterious visitor"></div><b>Mirror Visitor</b><span>Hold up a real mirror</span></div>
       </div>
     </section>
 
