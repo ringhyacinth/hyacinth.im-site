@@ -1,20 +1,48 @@
-import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20260926b";
-import * as A from "./audio.js?v=20260926b";
-import { FX, pixelWipe } from "./fx.js?v=20260926b";
-import { lineId } from "./voice-id.js?v=20260926b";
-import { TRACKS } from "./tracks.js?v=20260926b";
-import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20260926b";
+import { SCENES, SPEAKERS, CARDS, ITEMS, MAIN_ROUTE, BONUS, MAP_PINS } from "./data.js?v=20261006c";
+import * as A from "./audio.js?v=20261006c";
+import { FX, pixelWipe } from "./fx.js?v=20261006c";
+import { lineId } from "./voice-id.js?v=20261006c";
+import { TRACKS } from "./tracks.js?v=20261006c";
+import { T, isEN, setLang, getLang, onLang, applyStatic, tLine, tChoice, tTip, tSpeaker, tScene, tItem, tCard, tHu, tHot, rich, plain } from "./i18n.js?v=20261006c";
+import { XHS, V, media, onFirstFrame, voiceIndex, voiceUrl, clipUrl, imgUrl, loadImage, prefetchVideo, prefetchSceneVoices, holdPrefetch, whenIdle, loadDiag, saveImage, postImageNote } from "./platform.js?v=20261006c";
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const V = "?v=20260926b";
+if (XHS) document.documentElement.classList.add("xhs");
+
+// 页面上的图片读失败（小工具容器偶发读包失败）时换新请求重试几次，不留裂图
+addEventListener("error", (e) => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement)) return;
+  const src = img.getAttribute("src");
+  if (!src || src.startsWith("data:")) return;
+  if (img.dataset.retrySrc !== src) { img.dataset.retrySrc = src; img.dataset.retry = "0"; }
+  const n = Number(img.dataset.retry) + 1;
+  if (n > 5) return;
+  img.dataset.retry = String(n);
+  setTimeout(() => { if (img.getAttribute("src") === src) img.src = src; }, 500 * 2 ** (n - 1));
+}, true);
+// 读图一直没有回应（容器读包卡住）：8 秒后取消这次请求再读，最多 3 次
+const imgWait = new WeakMap();
+setInterval(() => {
+  const now = Date.now();
+  for (const img of document.images) {
+    const src = img.getAttribute("src");
+    if (!src || src.startsWith("data:") || img.complete) { imgWait.delete(img); continue; }
+    const w = imgWait.get(img);
+    if (!w || w.src !== src) { imgWait.set(img, { src, t: now, n: 0 }); continue; }
+    if (now - w.t < 8000 || w.n >= 3) continue;
+    w.n++; w.t = now;
+    img.src = "";
+    setTimeout(() => { if (img.getAttribute("src") === "") img.src = src; }, 50);
+  }
+}, 2000);
 
 // 配音索引：台词 id → 时长（秒）；缺失时回退到“嘀嗒”声
 let VOICE = {};
-fetch(`assets/voice/index.json${V}`).then((r) => (r.ok ? r.json() : {})).then((j) => { VOICE = j || {}; }).catch(() => {});
+voiceIndex().then((j) => { VOICE = j || {}; }).catch(() => {});
 const RADIO_VOICES = new Set(["signal", "booth"]);
-const voiceUrl = (id) => `assets/voice/${id}.mp3${V}`;
 const voiceFor = (who, text) => { const id = lineId(who, text); return VOICE[id] ? id : null; };
 function prefetchVoices(steps) {
   if (!A.voiceOn()) return;
@@ -24,11 +52,11 @@ function prefetchVoices(steps) {
 const SAVE_KEY = "pixel-shanghai-lane-radio-v1";
 const FINAL_NEED = 28;
 
-const SCENE = Object.fromEntries(SCENES.map((s) => [s.id, s]));
+const SCENE = SCENES.reduce((all, scene) => { all[scene.id] = scene; return all; }, {});
 const CARD_IDS = Object.keys(CARDS);
 const MAIN_CARDS = CARD_IDS.filter((id) => !CARDS[id].bonus && !CARDS[id].final);
 const HU_CARDS = CARD_IDS.filter((id) => CARDS[id].hu);
-const CARD_FREQ = Object.fromEntries(CARD_IDS.map((id, i) => [id, (87.6 + (i * 20.2) / (CARD_IDS.length - 1)).toFixed(1)]));
+const CARD_FREQ = CARD_IDS.reduce((all, id, i) => { all[id] = (87.6 + (i * 20.2) / (CARD_IDS.length - 1)).toFixed(1); return all; }, {});
 
 // 从剧本里找出每张卡属于哪个场景、哪个热点
 const CARD_HOME = {};
@@ -47,8 +75,10 @@ const sceneCards = (id) => CARD_IDS.filter((c) => CARD_HOME[c]?.scene === id);
 
 const fresh = () => ({ scene: "tianjing", visited: {}, seenHold: {}, cards: {}, items: [], flags: {}, bonus: {}, ended: false, started: Date.now(), playMs: 0 });
 let S = load();
+// 清空进度后页面刷新前不再存档（刷新时的 visibilitychange 会把内存里的进度又写回去）
+let wiped = false;
 function load() { try { return { ...fresh(), ...JSON.parse(localStorage.getItem(SAVE_KEY)) }; } catch { return fresh(); } }
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch {} }
+function save() { if (wiped) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch {} }
 const hasSave = () => { try { return !!localStorage.getItem(SAVE_KEY); } catch { return false; } };
 
 const has = (id) => !!S.cards[id];
@@ -79,19 +109,34 @@ function cond(expr) {
 
 // ---------------------------------------------------------------- 布局
 
-const app = $("#app"), stage = $("#stage"), layer = $("#layer"), video = $("#bgv"), still = $("#still");
+const app = $("#app"), stage = $("#stage"), layer = $("#layer"), video = media($("#bgv")), still = $("#still");
+const titleVideo = media($("#tv")), endVideo = media($("#end-video"));
 const fx = new FX($("#fx"));
 const wipe = $("#wipe");
+const radioConsole = $("#radio-console"), sceneChip = $("#chip");
 let portraitMode = false;
 
 const pan = { x: 0, tx: 0, lw: 0, min: 0, drag: null, moved: false };
 function layout() {
   const vw = innerWidth, vh = innerHeight;
   portraitMode = vh / vw > 1.05;
+  const insets = getComputedStyle($("#layout-insets"));
+  const top = parseFloat(insets.paddingTop) || 0, bottom = parseFloat(insets.paddingBottom) || 0;
+  const left = parseFloat(insets.paddingLeft) || 0, right = parseFloat(insets.paddingRight) || 0;
+  // 44px 是本版为容器控件预留的工程空间，不是平台提供的导航栏高度。
+  const contentTop = top + (XHS ? 44 : 8);
+  const usableWidth = Math.max(1, vw - left - right), usableHeight = Math.max(1, vh - contentTop - bottom);
+  // 导出图片面板挂在 body，安全区放到根节点让它们与 app 使用同一布局。
+  Object.entries({ "--safe-left": left, "--safe-right": right, "--safe-bottom": bottom, "--content-top": contentTop, "--usable-height": usableHeight, "--usable-width": usableWidth }).forEach(([k, v]) => document.documentElement.style.setProperty(k, `${v}px`));
   let sw, sh, sl, st;
   // 竖屏：画框接近正方形，16:9 画面放大后可左右拖动
-  if (portraitMode) { sw = vw; sh = Math.round(Math.min(vh * 0.47, vw * 1.05)); sl = 0; st = Math.round(Math.max(8, Math.min(vh * 0.04, vh - sh - 330))); }
-  else { sw = Math.min(vw, (vh * 16) / 9); sh = (sw * 9) / 16; sl = (vw - sw) / 2; st = (vh - sh) / 2; }
+  if (portraitMode) {
+    // 小红书原生返回/分享控件占独立一行；场景牌在它下方，收集数移到电台面板。
+    st = Math.round(contentTop + 36);
+    sw = usableWidth; sl = left;
+    sh = Math.round(Math.max(sw * 9 / 16, Math.min(vh * .47, sw * 1.05, vh - st - bottom - 252)));
+  }
+  else { sw = Math.min(usableWidth, (usableHeight * 16) / 9); sh = (sw * 9) / 16; sl = left + (usableWidth - sw) / 2; st = contentTop + (usableHeight - sh) / 2; }
   pan.lw = portraitMode ? Math.round((sh * 16) / 9) : sw;
   pan.min = Math.min(0, sw - pan.lw);
   app.style.setProperty("--lw", `${pan.lw}px`);
@@ -101,6 +146,10 @@ function layout() {
   const ui = Math.max(12, Math.round((portraitMode ? vw / 26 : sh / 36) / 6) * 6);
   Object.entries({ "--sw": sw, "--sh": sh, "--sl": sl, "--st": st, "--fs": fs, "--ui": ui }).forEach(([k, v]) => app.style.setProperty(k, `${v}px`));
   app.classList.toggle("portrait", portraitMode);
+  // 保留原节点和事件；横屏继续用舞台里的 HUD 坐标，竖屏使用正常流式面板。
+  const hudParent = portraitMode ? app : stage;
+  if (radioConsole.parentNode !== hudParent) hudParent.append(radioConsole);
+  if (sceneChip.parentNode !== hudParent) hudParent.append(sceneChip);
 }
 addEventListener("resize", layout);
 layout();
@@ -153,23 +202,59 @@ stage.addEventListener("click", (e) => { if (pan.moved) { e.stopPropagation(); e
 let current = null;
 let busy = false;
 let listening = false;
+// 只在本次游玩刚修好收音机时显示引导；旧档和刷新不重新教学。
+let listenGuideScene = null;
 let holdPlaying = false;
+let sceneRun = 0, holdTimer = 0;
 
 let entering = false;
+// 换场景中途出任何异常都要把 busy / entering 复位，否则之后所有点击和换场景都会被挡住
 async function travel(id, { instant = false } = {}) {
   if ((busy || entering) && !instant) return;
   busy = true; entering = true;
-  closeAllPanels();
-  A.sfx("tune");
-  await pixelWipe(wipe, "in", instant ? 1 : 480);
-  const first = await loadScene(id);
-  await pixelWipe(wipe, "out", 520);
-  busy = false;
-  try { await afterEnter(id, first); } finally { entering = false; }
+  tuning(false);
+  holdPrefetch(true);
+  let first = false;
+  try {
+    closeAllPanels();
+    A.stopVoice();
+    A.sfx("tune");
+    await pixelWipe(wipe, "in", instant ? 1 : 480);
+    first = await loadScene(id);
+    if (XHS) await sceneReady();
+  } catch (e) {
+    console.warn("loadScene", e);
+  } finally {
+    // 提示只表示当前画面尚未就绪；配音或旧场景的异步回调不能把它重新打开。
+    tuning(XHS && visualReadyRun !== sceneRun);
+    holdPrefetch(false);
+    await pixelWipe(wipe, "out", 520);
+    busy = false;
+  }
+  try { await afterEnter(id, first); } catch (e) { console.warn("afterEnter", e); } finally { entering = false; }
+}
+
+// 转场只等可见画面。声音仍提前读取，由每句对白自己的等待/降级逻辑管理。
+let visualReadyRun = -1, visualReady = Promise.resolve(), resolveVisual = () => {};
+const tuningEl = el("div", "tuning");
+stage.appendChild(tuningEl);
+function tuning(on) { tuningEl.textContent = T("调频中…"); tuningEl.classList.toggle("show", Boolean(on && visualReadyRun !== sceneRun)); }
+function markVisualReady(run) {
+  if (run !== sceneRun) return;
+  visualReadyRun = run;
+  tuning(false);
+  resolveVisual();
+}
+async function sceneReady() {
+  const run = sceneRun;
+  const t = setTimeout(() => { if (run === sceneRun) tuning(true); }, 400);
+  try { await Promise.race([visualReady, wait(2500)]); }
+  finally { clearTimeout(t); }
 }
 
 async function loadScene(id) {
   const sc = SCENE[id];
+  listenGuideScene = null;
   current = sc;
   S.scene = id;
   setListen(false);
@@ -178,27 +263,34 @@ async function loadScene(id) {
   save();
   $("#hotspots").innerHTML = "";
   holdPlaying = false;
+  clearTimeout(holdTimer);
   video.onended = null;
-  const mp4 = `assets/video/${id}.mp4${V}`;
+  const mp4 = clipUrl(id);
+  const run = ++sceneRun;
+  visualReady = new Promise(r => { resolveVisual = r; });
+  prefetchSceneVoices(id, 2);
+  // 画面：先挂本场景静帧，动画（画布）真正画出第一帧后才换上去；换片段时画布已清空，绝不露出上一个场景
+  video.style.opacity = 0;
   if (sc.mode === "loop") {
-    still.style.opacity = 0;
+    showStill(`assets/scene/${id}.webp${V}`);
     video.loop = true; video.poster = `assets/scene/${id}.webp${V}`; video.src = mp4;
-    video.style.opacity = 1;
-    video.play().catch(() => {});
-    still.src = `assets/scene/${id}.webp${V}`;
+    revealOnFrame(run);
+    playLoop(run);
   } else if (sc.mode === "hold" && !S.seenHold[id]) {
-    still.style.opacity = 0;
-    still.src = `assets/scene/${id}.webp${V}`;
+    showStill(`assets/scene/${id}-start.webp${V}`);
     video.loop = false; video.poster = `assets/scene/${id}-start.webp${V}`; video.src = mp4;
-    video.style.opacity = 1;
+    revealOnFrame(run);
+    loadImage(`assets/scene/${id}.webp${V}`);
     holdPlaying = true;
-    video.play().catch(() => finishHold());
+    // 看门狗：动画迟迟起不来（读包慢 / 解码失败）或播完却没收到 ended，都直接进场景
+    const arm = (sec) => { clearTimeout(holdTimer); holdTimer = setTimeout(() => { if (run === sceneRun) finishHold(); }, sec * 1000); };
+    arm(10);
+    video.play().then(() => { if (run === sceneRun && holdPlaying) arm((video.duration || 6) + 3); }).catch(() => finishHold());
     video.onended = finishHold;
     $("#skip").hidden = false;
   } else {
-    video.pause(); video.removeAttribute("src"); video.load(); video.style.opacity = 0;
-    still.src = `assets/scene/${sc.mode === "still" ? id + "-start" : id}.webp${V}`;
-    still.style.opacity = 1;
+    video.pause(); video.removeAttribute("src"); video.load();
+    showStill(`assets/scene/${sc.mode === "still" ? id + "-start" : id}.webp${V}`);
   }
   A.playMusic(sc.music || sc.mood);
   A.playAmbience(sc.amb);
@@ -207,17 +299,62 @@ async function loadScene(id) {
   const vis = sc.hotspots.filter((h) => !h.hidden);
   panTo(vis.length ? vis.reduce((s, h) => s + h.x + h.w / 2, 0) / vis.length : 50, true);
   renderHUD();
+  prefetchSceneVoices(id);
   prefetchNext();
   return first;
+}
+
+// 场景静帧和动画海报是同一张图：交给共享的 loadImage 去读，读好了再挂到 <img> 上（不会再发请求），
+// 这样卡住的读取只有一个请求方、能被取消重读。读不到就一直隔几秒再试，直到离开这个场景（进场时没读到，之后读到了会补上）。
+// keep：读好之前先留着 <img> 上现在的图（同一场景里从起始帧换到终帧时用）
+async function setStill(url, keep = false) {
+  const run = sceneRun;
+  still.dataset.want = url;
+  if (!keep) still.removeAttribute("src");
+  for (let n = 1; run === sceneRun && still.dataset.want === url; n++) {
+    const img = await loadImage(url);
+    if (run !== sceneRun || still.dataset.want !== url) return false;
+    if (img) {
+      still.src = img.src;
+      // 内嵌图和缓存图赋给可见 img 后仍需完成它自己的解码，不能只凭 detached Image 的成功。
+      if (still.decode) await still.decode().catch(() => {});
+      if (run !== sceneRun || still.dataset.want !== url) return false;
+      if (still.complete && still.naturalWidth) { markVisualReady(run); return true; }
+    }
+    await wait(Math.min(15000, 3000 * n));
+  }
+  return false;
+}
+function showStill(url) {
+  still.style.opacity = 1;
+  setStill(url);
+}
+function revealOnFrame(run) {
+  onFirstFrame(video, () => { if (run === sceneRun) { video.style.opacity = 1; still.style.opacity = 0; markVisualReady(run); } });
+}
+
+// 循环动画没起来（读包失败 / 超时）时隔几秒再试，一直到离开这个场景；设备不支持解码就停在静帧
+async function playLoop(run) {
+  for (let n = 1; run === sceneRun && current?.mode === "loop"; n++) {
+    try { await video.play(); return; } catch (e) { if (/unsupported/.test(e?.message)) return; }
+    await wait(Math.min(20000, 2000 * n));
+  }
 }
 
 function finishHold() {
   if (!holdPlaying) return;
   holdPlaying = false;
+  clearTimeout(holdTimer);
+  if (!video.ended) video.pause();
   S.seenHold[current.id] = true; save();
-  still.style.opacity = 1;
   $("#skip").hidden = true;
-  setTimeout(() => { if (!holdPlaying) video.style.opacity = 0; }, 400);
+  // 换成终帧静帧：读好之前画布（停在动画最后一帧）或起始静帧先顶着
+  const run = sceneRun;
+  setStill(`assets/scene/${current.id}.webp${V}`, true).then(() => {
+    if (run !== sceneRun || holdPlaying) return;
+    still.style.opacity = 1;
+    setTimeout(() => { if (run === sceneRun && !holdPlaying) video.style.opacity = 0; }, 450);
+  });
   renderHotspots();
 }
 $("#skip").addEventListener("click", (e) => { e.stopPropagation(); finishHold(); });
@@ -225,7 +362,10 @@ $("#skip").addEventListener("click", (e) => { e.stopPropagation(); finishHold();
 async function afterEnter(id, first = true) {
   const sc = SCENE[id];
   await showSceneCard(sc, !first);
-  if (holdPlaying) await new Promise((r) => { const t = setInterval(() => { if (!holdPlaying) { clearInterval(t); r(); } }, 120); });
+  if (holdPlaying) {
+    const t0 = Date.now();
+    await new Promise((r) => { const t = setInterval(() => { if (holdPlaying && Date.now() - t0 > 30000) finishHold(); if (!holdPlaying) { clearInterval(t); r(); } }, 120); });
+  }
   if (!S.flags[`intro_${id}`]) {
     S.flags[`intro_${id}`] = true; save();
     await runDialog(sc.intro);
@@ -242,11 +382,14 @@ async function showSceneCard(sc, quick = false) {
   await wait(quick ? 900 : 1700);
 }
 
+// 下一站的配音块马上排进预取（排在本场景的动画和配音块后面，预取只占一个读取位置），动画和静帧过一会儿再取
 function prefetchNext() {
   const i = MAIN_ROUTE.indexOf(current.id);
-  const next = MAIN_ROUTE[i + 1];
+  const next = i < 0 ? null : MAIN_ROUTE[i + 1];
   if (!next) return;
-  setTimeout(() => { fetch(`assets/video/${next}.mp4${V}`).catch(() => {}); new Image().src = `assets/scene/${next}.webp${V}`; }, 2500);
+  prefetchSceneVoices(next, 0);
+  const run = sceneRun;
+  setTimeout(() => { if (run !== sceneRun) return; prefetchVideo(next); whenIdle(() => { if (run === sceneRun) loadImage(`assets/scene/${next}.webp${V}`); }); }, 2500);
 }
 
 // ---------------------------------------------------------------- 热点
@@ -338,6 +481,7 @@ let dialogOpen = false;
 let advance = null;
 let pendingEnding = false;
 const dlg = $("#dialog"), dText = $("#d-text"), dName = $("#d-name"), dPort = $("#d-portrait"), dChoices = $("#d-choices");
+addEventListener("resize", () => { if (dialogOpen) placeDialog(dlgSpot); });
 const waveCanvas = el("canvas", "wave");
 waveCanvas.width = 64; waveCanvas.height = 64;
 let waveColor = "#7ee0c3", waveTalking = false;
@@ -355,7 +499,7 @@ let waveColor = "#7ee0c3", waveTalking = false;
 })(0);
 
 function openDialog() { dialogOpen = true; dlg.classList.add("open"); app.classList.add("talking"); A.duckMusic(0.55); }
-function closeDialog() { dialogOpen = false; dlg.classList.remove("open"); app.classList.remove("talking"); A.duckMusic(listening ? 0.35 : 1); }
+function closeDialog() { dialogOpen = false; sayToken++; A.stopVoice(); dlg.classList.remove("open"); app.classList.remove("talking"); A.duckMusic(listening ? 0.35 : 1); }
 
 // 横屏时对话框放在上方或下方：取和说话人（没有说话人时取本场景热点）重叠更少的一边
 const DLG_BOTTOM = [70, 97], DLG_TOP = [13, 40];
@@ -392,7 +536,11 @@ async function runSteps(steps, spot) {
     } else if (s.card) await grantCard(s.card);
     else if (s.give) { if (!S.items.includes(s.give)) { S.items.push(s.give); save(); A.sfx("item"); renderHUD(); toast(T("获得：{name}", { name: tItem(s.give, ITEMS[s.give], "name") }), ITEMS[s.give].icon); } }
     else if (s.take) { S.items = S.items.filter((x) => x !== s.take); save(); renderHUD(); }
-    else if (s.set) { S.flags[s.set] = true; save(); if (s.set === "fixed") { renderHUD(); pulse("#btn-listen"); } }
+    else if (s.set) {
+      if (s.set === "fixed" && !S.flags.fixed) listenGuideScene = current.id;
+      S.flags[s.set] = true; save();
+      if (s.set === "fixed") { renderHUD(); pulse("#btn-listen"); }
+    }
     else if (s.sfx) A.sfx(s.sfx);
     else if (s.tip) await say("tip", s.tip);
     else if (s.tipCount) { const n = mainCount(); await say("tip", T("已收集 {n} / {need} 段声音，还差 {left} 段。打开收听模式，回到之前的场景，找找藏起来的声音吧。", { n, need: s.tipCount, left: Math.max(0, s.tipCount - n) })); }
@@ -442,7 +590,30 @@ function fitSprite() {
 }
 addEventListener("resize", () => { if (dPort.contains(portSprite)) fitSprite(); });
 
-let lastPortrait = "";
+let lastPortrait = "", portraitReady = Promise.resolve(true), portraitRun = 0;
+function preparePortrait(img, src, key) {
+  // 内嵌字节已在内存里，但新图仍要解码；头像就绪后再开始当前句，避免先说话后出脸。
+  img.style.visibility = "hidden";
+  const run = ++portraitRun;
+  return new Promise((resolve) => {
+    let done = false;
+    const matches = () => run === portraitRun && img.getAttribute("src") === src && dPort.contains(img);
+    const finish = (ok) => {
+      if (done) return;
+      done = true; clearTimeout(timer);
+      img.removeEventListener("load", loaded); img.removeEventListener("error", failed);
+      if (matches()) img.style.visibility = "";
+      if (!ok && run === portraitRun && lastPortrait === key) lastPortrait = ""; // 失败不能缓存成已准备，下句可重新加载。
+      resolve(ok);
+    };
+    const loaded = () => { if (matches()) finish(Boolean(img.complete && img.naturalWidth)); };
+    const failed = () => finish(false);
+    const timer = setTimeout(() => finish(false), 4000);
+    img.addEventListener("load", loaded); img.addEventListener("error", failed);
+    img.src = src;
+    if (img.complete && img.naturalWidth && matches()) finish(true);
+  });
+}
 function setSpeaker(who) {
   const sp = who === "tip" ? { name: T("提示"), wave: "#f4c56b" } : SPEAKERS[who];
   dName.textContent = who === "tip" ? sp.name : tSpeaker(who, sp.name);
@@ -453,12 +624,17 @@ function setSpeaker(who) {
   if (key === lastPortrait && dPort.firstChild) return sp;
   lastPortrait = key;
   dPort.innerHTML = "";
-  if (who === "tip") dPort.appendChild(el("img", "item-port", null)).src = `assets/item/radio.png${V}`;
+  portraitReady = Promise.resolve(true);
+  if (who === "tip") {
+    const img = dPort.appendChild(el("img", "item-port", null));
+    portraitReady = preparePortrait(img, imgUrl("assets/item/radio.png"), key);
+  }
   else if (sp.portrait) {
     paintPortraitBg(sp.wave);
     if (!still.naturalWidth) lastPortrait = "";
-    portSprite.src = `assets/portrait/${sp.portrait}.png${V}`; portSprite.alt = sp.name;
+    portSprite.alt = sp.name;
     dPort.append(portBg, portSprite);
+    portraitReady = preparePortrait(portSprite, imgUrl(`assets/portrait/${sp.portrait}.png`), key);
     fitSprite();
   }
   else { waveColor = sp.wave; dPort.appendChild(waveCanvas); }
@@ -468,6 +644,7 @@ function setSpeaker(who) {
 let sayToken = 0;
 let autoAdvance = (() => { try { return localStorage.getItem(SAVE_KEY + "-auto") === "1"; } catch { return false; } })();
 function say(who, text) {
+  dlg.scrollTop = 0;
   const sp = setSpeaker(who);
   dChoices.innerHTML = "";
   dlg.classList.remove("ready");
@@ -483,7 +660,14 @@ function say(who, text) {
     dText.textContent = "";
     waveTalking = true;
     advance = null;
-    if (vid) voice = await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(who) });
+    const preparing = setTimeout(() => {
+      if (token === sayToken && dialogOpen) dText.textContent = T(vid ? "正在准备语音…" : "正在准备对话…");
+    }, 600);
+    try {
+      await portraitReady;
+      if (token === sayToken && dialogOpen && vid) voice = await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(who) });
+    } finally { clearTimeout(preparing); if (token === sayToken) dText.textContent = ""; }
+    if (token !== sayToken || !dialogOpen) { resolve(); return; }
     if (voice) window.__onVoice?.(vid, RADIO_VOICES.has(who));
     dlg.classList.toggle("speaking", Boolean(sp.portrait));
     // 有配音时，打字机与语音同步；停顿符号按语音节奏略微放慢
@@ -527,6 +711,7 @@ function choose(labels) {
     });
     advance = null;
     choiceKeys = (n) => { const b = dChoices.children[n]; if (b) b.click(); };
+    if (portraitMode) dChoices.scrollIntoView({ block: "nearest" });
   });
 }
 let choiceKeys = null;
@@ -544,7 +729,7 @@ function thumbStyle(id) {
   const cx = (h.x + h.w / 2) / 100, cy = (h.y + h.h / 2) / 100;
   const px = Math.min(1, Math.max(0, (cx * k - 0.5) / (k - 1))) * 100, py = Math.min(1, Math.max(0, (cy * k - 0.5) / (k - 1))) * 100;
   const img = sc.mode === "still" ? `${sc.id}-start` : sc.id;
-  return `background-image:url(assets/scene/${img}.webp${V});background-size:${k * 100}% auto;background-position:${px}% ${py}%`;
+  return `background-image:url(${imgUrl(`assets/scene/${img}.webp`)});background-size:${k * 100}% auto;background-position:${px}% ${py}%`;
 }
 
 function cardHTML(id, big = false) {
@@ -562,6 +747,7 @@ function cardHTML(id, big = false) {
 async function grantCard(id) {
   if (has(id)) return;
   S.cards[id] = Date.now(); save();
+  if (CARDS[id].hidden) listenGuideScene = null;
   A.sfx("card");
   const pop = $("#cardpop");
   pop.innerHTML = `<div class="pop-head">${T("收到一段声音 · {n}/{total}", { n: mainCount(), total: MAIN_CARDS.length })}</div>${cardHTML(id, true)}<div class="pop-foot">${T("点击继续")}</div>`;
@@ -581,14 +767,15 @@ function renderHUD(bump = false) {
   const bonusIds = CARD_IDS.filter((id) => CARDS[id].bonus);
   const n = current.bonus ? bonusIds.filter(has).length : mainCount();
   const total = current.bonus ? bonusIds.length : MAIN_CARDS.length;
-  $("#counter").innerHTML = `<div class="dial"><div class="needle" style="left:${8 + (n / total) * 84}%"></div>${Array.from({ length: 21 }, (_, i) => `<i style="left:${4 + i * 4.6}%"></i>`).join("")}</div><div class="cnt"><b>${n}</b>/${total}<span>${T(current.bonus ? "段电台旧梦" : "段上海闲话")}</span></div>`;
+  $("#counter").innerHTML = `<div class="dial"><div class="needle" style="left:${8 + (n / total) * 84}%"></div>${Array.from({ length: 21 }, (_, i) => `<i style="left:${4 + i * 4.6}%"></i>`).join("")}</div><div class="cnt"><span class="count-label">${T("已收集")}</span><b>${n}</b>/${total}<span>${T(current.bonus ? "段电台旧梦" : "段上海闲话")}</span></div>`;
   if (bump) { const c = $("#counter"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
   const itemText = (k) => `${tItem(k, ITEMS[k], "name")}${isEN() ? ": " : "："}${tItem(k, ITEMS[k], "desc")}`;
-  $("#inv").innerHTML = S.items.map((it) => `<button class="slot" title="${itemText(it)}"><img src="assets/item/${ITEMS[it].icon}.png${V}" alt="${tItem(it, ITEMS[it], "name")}"></button>`).join("");
+  $("#inv").innerHTML = S.items.map((it) => `<button class="slot" title="${itemText(it)}"><img src="${imgUrl(`assets/item/${ITEMS[it].icon}.png`)}" alt="${tItem(it, ITEMS[it], "name")}"></button>`).join("");
   $("#inv").querySelectorAll(".slot").forEach((b, i) => b.addEventListener("click", (e) => { e.stopPropagation(); const k = S.items[i]; toast(itemText(k), ITEMS[k].icon); }));
   $("#btn-listen").classList.toggle("locked", !S.flags.fixed);
   $("#btn-tuner").classList.toggle("locked", !S.flags.fixed);
   $("#btn-listen").classList.toggle("on", listening);
+  renderListenGuide();
   // 下一站
   const i = MAIN_ROUTE.indexOf(current.id);
   const next = MAIN_ROUTE[i + 1];
@@ -601,6 +788,7 @@ function renderHUD(bump = false) {
   } else if (current.bonus) {
     nb.hidden = false; nb.innerHTML = T("回到今天 ▸"); nb.onclick = (e) => { e.stopPropagation(); openMap(); };
   } else nb.hidden = true;
+  $("#console-route").classList.toggle("available", !nb.hidden);
   const left = sceneCards(current.id).filter((c) => !has(c));
   $("#scene-left").textContent = left.length ? T("这里还有 {n} 段声音", { n: left.length }) : T("这里的声音都收集到了");
 }
@@ -619,7 +807,7 @@ function checkProgress() {
 let toastTimer;
 function toast(msg, icon) {
   const t = $("#toast");
-  t.innerHTML = `${icon ? `<img src="assets/item/${icon}.png${V}" alt="">` : ""}<span>${msg}</span>`;
+  t.innerHTML = `${icon ? `<img src="${imgUrl(`assets/item/${icon}.png`)}" alt="">` : ""}<span>${msg}</span>`;
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
@@ -628,7 +816,21 @@ function pulse(sel) { const e = $(sel); if (!e) return; e.classList.remove("puls
 
 // ---------------------------------------------------------------- 收听模式
 
-function setListen(on) {
+function renderListenGuide() {
+  const button = $("#btn-listen"), guide = $("#listen-guide");
+  button.setAttribute("aria-pressed", String(listening));
+  button.querySelector("span").textContent = T(listening ? "收听中" : "收听");
+  guide.hidden = !S.flags.fixed || !current || listenGuideScene !== current.id;
+  if (guide.hidden) { guide.textContent = ""; return; }
+  const hidden = sceneCards(current.id).filter((id) => CARDS[id].hidden);
+  const left = hidden.filter((id) => !has(id)).length;
+  const status = left ? T("本场景隐藏声音还剩 {n} 段", { n: left }) : T(hidden.length ? "本场景隐藏声音已收齐" : "本场景没有隐藏声音");
+  const action = listening ? T("收听中：点场景里的金色发光处，收集声音卡。") : T("点工具栏「收听」，再点场景里的金色发光处收集声音卡。");
+  guide.textContent = `${status} · ${action}${portraitMode && left ? T("可左右拖动场景寻找。") : ""}`;
+}
+addEventListener("resize", renderListenGuide);
+
+function setListen(on, notify = false) {
   if (on && !S.flags.fixed) { toast(T("收音机还没修好。去弄堂口的修理铺看看。")); return; }
   listening = on;
   app.classList.toggle("listening", on);
@@ -637,17 +839,20 @@ function setListen(on) {
   if (!dialogOpen) A.duckMusic(on ? 0.35 : 1);
   if (on) A.sfx("static");
   $("#btn-listen").classList.toggle("on", on);
+  renderListenGuide();
+  if (notify) toast(T(on ? "收听已开启：点场景里的金色发光处收音" : "收听已关闭，可继续与街坊交谈"));
 }
 
 // ---------------------------------------------------------------- 面板：收集簿 / 地图 / 调频 / 设置
 
-function closeAllPanels() { document.querySelectorAll(".panel.open").forEach((p) => p.classList.remove("open")); stopTuner(); }
+function closeAllPanels() { const panels = document.querySelectorAll(".panel.open"); if (panels.length) stopCardReplay(); panels.forEach((p) => p.classList.remove("open")); stopTuner(); }
 function openPanel(id) { if (dialogOpen || busy || entering) return false; const p = $(id); const was = p.classList.contains("open"); closeAllPanels(); if (was) { A.sfx("close"); return false; } p.classList.add("open"); A.sfx("open"); return true; }
 document.querySelectorAll(".panel .x").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); closeAllPanels(); A.sfx("close"); }));
 
 let jTab = "cards";
 function openJournal() { if (!openPanel("#journal")) return; renderJournal(); }
 function renderJournal() {
+  stopCardReplay();
   const body = $("#j-body");
   $("#j-stats").innerHTML = T("声音卡 <b>{a}</b>/{b} · 沪语词条 <b>{c}</b>/{d}", { a: totalCount(), b: CARD_IDS.length, c: HU_CARDS.filter(has).length, d: HU_CARDS.length });
   document.querySelectorAll("#journal .tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === jTab));
@@ -667,38 +872,51 @@ function renderJournal() {
     }).join("")}</div><p class="note">${T("读音为近似拼读，只作游戏里的趣味提示。")}</p>`;
     body.querySelectorAll(".word[data-id]").forEach((b) => b.addEventListener("click", () => {
       const hid = voiceFor("hu", CARDS[b.dataset.id].hu[0]);
-      if (hid) A.playVoice(voiceUrl(hid));
       showCardDetail(b.dataset.id);
+      if (hid) A.playVoice(voiceUrl(hid), REPLAY);
     }));
   } else {
     const all = Object.keys(ITEMS);
     body.innerHTML = `<div class="items">${all.map((k) => S.items.includes(k)
-      ? `<div class="itm"><img src="assets/item/${ITEMS[k].icon}.png${V}" alt=""><b>${tItem(k, ITEMS[k], "name")}</b><span>${tItem(k, ITEMS[k], "desc")}</span></div>`
+      ? `<div class="itm"><img src="${imgUrl(`assets/item/${ITEMS[k].icon}.png`)}" alt=""><b>${tItem(k, ITEMS[k], "name")}</b><span>${tItem(k, ITEMS[k], "desc")}</span></div>`
       : `<div class="itm lock"><div class="ph"></div><b>${T("？？？")}</b><span>${k === "radio" ? "" : T("在路上也许会用到")}</span></div>`).join("")}</div>
       <p class="note">${T("道具送出去以后就不在包里了，但它们的故事留在声音卡里。")}</p>`;
   }
 }
 document.querySelectorAll("#journal .tab").forEach((t) => t.addEventListener("click", (e) => { e.stopPropagation(); jTab = t.dataset.tab; A.sfx("click"); renderJournal(); }));
 
+// 场景外的重听（收集簿、词典、设置试听）：小红书版给慢设备更多解码时间。
+const REPLAY = globalThis.__XHS__ ? { wait: 8000 } : {};
+let cardReplayRun = 0, cardReplayTimer = 0;
+function stopCardReplay() { cardReplayRun++; clearInterval(cardReplayTimer); cardReplayTimer = 0; A.stopVoice(); }
 function showCardDetail(id) {
+  stopCardReplay();
   const d = $("#j-detail");
+  // 打开卡片时就开始读这张卡的配音，点「重听」时多半已经好了
+  const qv = voiceFor(CARDS[id].who, CARDS[id].quote), hv = CARDS[id].hu && voiceFor("hu", CARDS[id].hu[0]);
+  for (const v of [qv, hv]) if (v) A.loadVoice(voiceUrl(v));
   d.innerHTML = `${cardHTML(id, true)}<div class="dbtn"><button class="px-btn" id="replay">${T("▶ 重听")}</button><button class="px-btn" id="dclose">${T("收起")}</button></div>`;
   d.classList.add("show");
   A.sfx("open");
-  $("#dclose").onclick = (e) => { e.stopPropagation(); d.classList.remove("show"); A.sfx("close"); };
+  $("#dclose").onclick = (e) => { e.stopPropagation(); stopCardReplay(); d.classList.remove("show"); A.sfx("close"); };
   $("#replay").onclick = async (e) => {
     e.stopPropagation();
+    stopCardReplay();
+    const run = cardReplayRun;
+    const active = () => run === cardReplayRun && $("#journal").classList.contains("open") && d.classList.contains("show");
     const c = CARDS[id], sp = SPEAKERS[c.who];
     const vid = voiceFor(c.who, c.quote);
-    if (vid && await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(c.who) })) return;
-    let k = 0; const it = setInterval(() => { A.blip(sp.voice, !sp.portrait); if (++k > Math.min(28, c.quote.length / 2)) clearInterval(it); }, 60);
+    if (vid && await A.playVoice(voiceUrl(vid), { radio: RADIO_VOICES.has(c.who), ...REPLAY })) return;
+    if (!active()) return;
+    let k = 0;
+    cardReplayTimer = setInterval(() => { if (!active()) { clearInterval(cardReplayTimer); return; } A.blip(sp.voice, !sp.portrait); if (++k > Math.min(28, c.quote.length / 2)) clearInterval(cardReplayTimer); }, 60);
   };
   const hu = d.querySelector(".hu");
   const hid = CARDS[id].hu && voiceFor("hu", CARDS[id].hu[0]);
   if (hu && hid) {
     const b = el("button", "hu-play", "▶");
     b.title = T("听听上海话怎么讲");
-    b.addEventListener("click", (e) => { e.stopPropagation(); A.playVoice(voiceUrl(hid)); });
+    b.addEventListener("click", (e) => { e.stopPropagation(); stopCardReplay(); A.playVoice(voiceUrl(hid), REPLAY); });
     hu.prepend(b);
   }
 }
@@ -713,7 +931,7 @@ function openMap() {
     const open = unlocked(id), here = current?.id === id, full = sceneCards(id).every(has);
     const got = sceneCards(id).filter(has).length;
     return `<button class="pin ${open ? "" : "locked"} ${here ? "here" : ""} ${full ? "full" : ""}" data-id="${id}" style="left:${x}%;top:${y}%">
-      <span class="num">${open ? (full ? "★" : i + 1) : "🔒"}</span><span class="pl">${open ? `<b>${tScene(sc, "time")}</b> ${tScene(sc, "name")}<small>${got}/${sceneCards(id).length}</small>` : T("？？？")}</span>${here ? `<img class="me" src="assets/portrait/xiaoman.png${V}" alt="">` : ""}</button>`;
+      <span class="num">${open ? (full ? "★" : i + 1) : "🔒"}</span><span class="pl">${open ? `<b>${tScene(sc, "time")}</b> ${tScene(sc, "name")}<small>${got}/${sceneCards(id).length}</small>` : T("？？？")}</span>${here ? `<img class="me" src="${imgUrl("assets/portrait/xiaoman.png")}" alt="">` : ""}</button>`;
   }).join("");
   pins.querySelectorAll(".pin").forEach((b) => b.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -750,6 +968,8 @@ function openTuner() {
   scale.innerHTML = Array.from({ length: 21 }, (_, i) => { const f = FMIN + i * ((FMAX - FMIN) / 20); return `<i style="left:${(i / 20) * 100}%"><span>${i % 2 === 0 ? Math.round(f) : ""}</span></i>`; }).join("")
     + BONUS.map((b) => (knownFreq(b.freq) ? `<em class="mark ${S.bonus[b.id] ? "found" : ""}" style="left:${((b.freq - FMIN) / (FMAX - FMIN)) * 100}%">${S.bonus[b.id] ? "★" : "?"}</em>` : "")).join("");
   A.stopMusic(0.3);
+  // 已经知道频率、还没去过的番外电台：先把配音块预取上
+  for (const b of BONUS) if (knownFreq(b.freq) && !S.visited[b.id]) prefetchSceneVoices(b.id, 0);
   updateTuner();
 }
 const knownFreq = (f) => S.ended || CARD_IDS.some((id) => has(id) && CARDS[id].freq && Number(CARDS[id].freq) === f);
@@ -777,7 +997,7 @@ function updateTuner() {
     tuner.locked = best;
     info.innerHTML = `<b>${T("锁定信号 · FM {f}", { f: best.freq })}</b><span>${tScene(SCENE[best.id], "name")}</span><button class="px-btn gold" id="t-go">${T("跟着声音去 ▸")}</button>`;
     $("#t-go").onclick = (e) => { e.stopPropagation(); const id = best.id; if (!S.bonus[id]) { S.bonus[id] = true; save(); A.sfx("lock"); } travel(id); };
-    if (!tuner.lockedSfx) { A.sfx("lock"); tuner.lockedSfx = true; }
+    if (!tuner.lockedSfx) { A.sfx("lock"); tuner.lockedSfx = true; prefetchSceneVoices(best.id, 1); }
   } else {
     tuner.locked = null; tuner.lockedSfx = false;
     info.innerHTML = strength > 0.35 ? `<b>${T("好像有什么……")}</b><span>${T("再慢一点")}</span>` : `<b>${T("沙沙沙……")}</b><span>${T("慢慢转动旋钮，寻找藏在夜空里的电台")}</span>`;
@@ -805,23 +1025,67 @@ function openSettings() {
 }
 $("#vol-music").addEventListener("input", (e) => { A.setVolumes({ music: Number(e.target.value) }); storeVol(); });
 $("#vol-voice").addEventListener("input", (e) => { A.setVolumes({ voice: Number(e.target.value) }); storeVol(); });
-$("#vol-voice").addEventListener("change", () => { const id = voiceFor("hu", "侬好"); if (id) A.playVoice(voiceUrl(id)); });
+$("#vol-voice").addEventListener("change", () => { const id = voiceFor("hu", "侬好"); if (id) A.playVoice(voiceUrl(id), REPLAY); });
 $("#vol-sfx").addEventListener("input", (e) => { A.setVolumes({ sfx: Number(e.target.value) }); A.sfx("hover"); storeVol(); });
 function storeVol() { try { localStorage.setItem(SAVE_KEY + "-vol", JSON.stringify(A.getVolumes())); } catch {} }
 try { const v = JSON.parse(localStorage.getItem(SAVE_KEY + "-vol")); if (v) A.setVolumes(v); } catch {}
 $("#btn-reset").addEventListener("click", (e) => {
   e.stopPropagation();
   if (!confirm(T("确定要清空进度，重新开始这一天吗？"))) return;
-  localStorage.removeItem(SAVE_KEY); location.reload();
+  wiped = true;
+  try { localStorage.removeItem(SAVE_KEY); } catch {}
+  location.reload();
 });
-$("#btn-full").addEventListener("click", (e) => { e.stopPropagation(); if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
+// 隐藏的加载日志（真机排查用）：3 秒内连点左上时间牌或设置标题 5 下打开，截图发回来即可。换场景卡住时也能打开
+let diagTaps = [];
+function diagTap(e) {
+  e.stopPropagation();
+  const now = Date.now();
+  diagTaps = diagTaps.filter((t) => now - t < 3000).concat(now);
+  if (diagTaps.length >= 5) { diagTaps = []; openDiag(); }
+}
+$("#chip").addEventListener("click", diagTap);
+$("#settings h2").addEventListener("click", diagTap);
+function openDiag() {
+  let box = $("#diag");
+  if (!box) {
+    box = el("div", "panel", `<div class="p-win"><div class="p-head"><h2>加载日志</h2><div>截图发给我们</div><button class="x" aria-label="关闭">✕</button></div><pre class="p-body diag-log"></pre></div>`);
+    box.id = "diag";
+    document.body.appendChild(box);
+    box.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); box.classList.remove("open"); });
+  }
+  box.classList.add("open");
+  const paint = () => { if (!box.classList.contains("open")) return; box.querySelector("pre").textContent = diagText(); setTimeout(paint, 1000); };
+  paint();
+}
+function diagText() {
+  const d = loadDiag(), m = window.__XHS_MEDIA?.[0], audio = A.voiceDiag();
+  const yes = (v) => (v ? "是" : "否"), clock = (t) => new Date(t).toTimeString().slice(0, 8), file = (s) => String(s || "无").replace(/^.*\//, "");
+  const stillOk = still.getAttribute("src") && still.complete && still.naturalWidth;
+  return [
+    `${clock(Date.now())} 场景 ${current?.id || "-"} · 忙 ${yes(busy)} · 进场中 ${yes(entering)} · 开场动画 ${yes(holdPlaying)} · 对话 ${yes(dialogOpen)}`,
+    `挂起未返回 ${d.hung} · 读取中 ${d.active} · 预取 ${d.paused ? "暂停（挂起太多）" : d.held ? "换场景中暂缓" : "正常"}`,
+    `静帧 ${file(still.dataset.want)} ${stillOk ? "已显示" : "未读到"}（透明度 ${still.style.opacity || 0}） · 画布 ${m ? `${file(m.src)} 共画 ${m.framesDrawn} 帧（透明度 ${video.style.opacity || 0}）` : "原生视频"}`,
+    `排队 ${d.queued.map(file).join(" ") || "无"}`,
+    `配音解码 ${audio.decoding} · 挂起 ${audio.hung} · 排队 ${audio.queued.length} · 已缓存 ${audio.cached}`,
+    ...(XHS ? [`内嵌资源：图片 ${Object.keys(globalThis.__XHS_IMG || {}).length} · 配音 ${Object.keys(globalThis.__XHS_VOICE || {}).length} · 动画 ${Object.keys(globalThis.__XHS_VID || {}).length}`] : []),
+    "",
+    ...d.log.slice().reverse().map((e) => `${clock(e.at)} ${e.kind} ${file(e.src)} ${e.ms == null ? `读取中 ${((Date.now() - e.at) / 1000).toFixed(1)}s` : `${(e.ms / 1000).toFixed(1)}s ${e.res}`}${e.late ? ` → 后来${e.late}` : ""}`),
+  ].join("\n");
+}
+window.__loadDiag = () => ({ ...loadDiag(), scene: current?.id, busy, entering, text: diagText() });
+
+// 小红书小工具的全屏由容器管理
+if (globalThis.__XHS__) $("#btn-full").remove();
+else $("#btn-full").addEventListener("click", (e) => { e.stopPropagation(); if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); });
 
 // ---------------------------------------------------------------- 按钮与键盘
 
 const bind = (sel, fn) => $(sel).addEventListener("click", (e) => { e.stopPropagation(); A.initAudio(); fn(); });
-bind("#btn-listen", () => { if (!dialogOpen) setListen(!listening); });
+bind("#btn-listen", () => { if (!dialogOpen) setListen(!listening, true); });
 bind("#btn-map", openMap);
 bind("#btn-journal", openJournal);
+bind("#btn-bag", () => { if (openPanel("#journal")) { jTab = "items"; renderJournal(); } });
 bind("#btn-tuner", openTuner);
 bind("#btn-settings", openSettings);
 
@@ -831,7 +1095,7 @@ addEventListener("keydown", (e) => {
     e.preventDefault();
     if ($("#cardpop").classList.contains("show") && advance) return advance();
     if (dialogOpen) { if (advance) advance(); return; }
-    if (e.key === " " && !document.querySelector(".panel.open")) setListen(!listening);
+    if (e.key === " " && !document.querySelector(".panel.open")) setListen(!listening, true);
     return;
   }
   if (dialogOpen && /^[1-9]$/.test(e.key) && choiceKeys) { choiceKeys(Number(e.key) - 1); return; }
@@ -841,7 +1105,7 @@ addEventListener("keydown", (e) => {
   if (k === "m") openMap();
   if (k === "j" || k === "tab") { e.preventDefault(); openJournal(); }
   if (k === "t") openTuner();
-  if (k === "l") setListen(!listening);
+  if (k === "l") setListen(!listening, true);
   if (tunerOpen() && (e.key === "ArrowLeft" || e.key === "ArrowRight")) nudge(e.key === "ArrowLeft" ? -0.1 : 0.1);
 });
 const tunerOpen = () => $("#tuner").classList.contains("open");
@@ -853,27 +1117,38 @@ stage.addEventListener("click", () => { if (holdPlaying) finishHold(); });
 async function preloadFirstScene() {
   const t = $("#title");
   t.classList.add("loading");
-  const urls = [`assets/video/tianjing.mp4${V}`, `assets/scene/tianjing.webp${V}`, `assets/portrait/apo.png${V}`, `assets/portrait/xiaoman.png${V}`, `assets/item/radio.png${V}`];
-  const got = new Map(), size = new Map();
-  const paint = () => {
-    const total = [...size.values()].reduce((a, b) => a + b, 0) || 1;
-    const done = [...got.values()].reduce((a, b) => a + b, 0);
-    const p = Math.min(100, Math.round((done / total) * 100));
-    $("#t-load i").style.width = `${p}%`;
-    $("#t-load span").textContent = `${T("正在调频…")} ${p}%`;
-  };
-  const one = async (u) => {
-    try {
-      const r = await fetch(u);
-      size.set(u, Number(r.headers.get("content-length")) || 200000);
-      if (!r.body) { await r.arrayBuffer(); got.set(u, size.get(u)); paint(); return; }
-      const rd = r.body.getReader();
-      let n = 0;
-      for (;;) { const { done, value } = await rd.read(); if (done) break; n += value.length; got.set(u, n); paint(); }
-      got.set(u, size.get(u)); paint();
-    } catch { size.set(u, 1); got.set(u, 1); }
-  };
-  await Promise.race([Promise.all(urls.map(one)), wait(12000)]);
+  const images = [`assets/scene/tianjing.webp${V}`, imgUrl("assets/portrait/apo.png"), imgUrl("assets/portrait/xiaoman.png"), imgUrl("assets/item/radio.png")];
+  const bar = (p) => { $("#t-load i").style.width = `${p}%`; $("#t-load span").textContent = `${T("正在调频…")} ${p}%`; };
+  if (globalThis.__XHS__) {
+    // 离线包：素材都在本地，只要把第一个场景的动画数据和图片先解出来
+    const jobs = images.map(loadImg);
+    // 停在标题页的这段时间顺手预取：要进的第一个场景的配音块、词条块（词典点读、设置试听）
+    prefetchSceneVoices(unlocked(S.scene) ? S.scene : "tianjing", 1);
+    prefetchVideo("tianjing");
+    prefetchSceneVoices("hu", 0);
+    let n = 0;
+    await Promise.race([Promise.all(jobs.map((j) => Promise.resolve(j).finally(() => bar(Math.round((++n / jobs.length) * 100))))), wait(8000)]);
+  } else {
+    const urls = [clipUrl("tianjing"), ...images];
+    const got = new Map(), size = new Map();
+    const paint = () => {
+      const total = [...size.values()].reduce((a, b) => a + b, 0) || 1;
+      const done = [...got.values()].reduce((a, b) => a + b, 0);
+      bar(Math.min(100, Math.round((done / total) * 100)));
+    };
+    const one = async (u) => {
+      try {
+        const r = await fetch(u);
+        size.set(u, Number(r.headers.get("content-length")) || 200000);
+        if (!r.body) { await r.arrayBuffer(); got.set(u, size.get(u)); paint(); return; }
+        const rd = r.body.getReader();
+        let n = 0;
+        for (;;) { const { done, value } = await rd.read(); if (done) break; n += value.length; got.set(u, n); paint(); }
+        got.set(u, size.get(u)); paint();
+      } catch { size.set(u, 1); got.set(u, 1); }
+    };
+    await Promise.race([Promise.all(urls.map(one)), wait(12000)]);
+  }
   t.classList.remove("loading");
 }
 
@@ -892,9 +1167,11 @@ async function begin(resume) {
   if (!resume) { S = fresh(); save(); }
   A.sfx("tune");
   $("#title").classList.add("leave");
-  $("#tv").pause();
+  titleVideo.pause();
   await wait(700);
   $("#title").classList.remove("show", "leave");
+  // 标题动画不再需要：释放解码器（手机上硬件解码器数量有限）
+  if (XHS) titleVideo.src = "";
   app.classList.add("playing");
   const id = resume && unlocked(S.scene) ? S.scene : "tianjing";
   await travel(id, { instant: true });
@@ -906,7 +1183,7 @@ $("#title").addEventListener("pointerdown", () => { A.initAudio(); A.playMusic("
 async function playEnding() {
   S.ended = true; save();
   const end = $("#ending");
-  const ev = $("#end-video");
+  const ev = endVideo;
   end.classList.add("show");
   app.classList.add("ended");
   A.stopAmbience();
@@ -914,11 +1191,11 @@ async function playEnding() {
   setListen(false);
   const cap = $("#end-cap");
   const caption = async (txt, ms) => { cap.textContent = txt; cap.classList.add("show"); await wait(ms); cap.classList.remove("show"); await wait(600); };
-  ev.src = `assets/video/moon.mp4${V}`; ev.className = "wide";
+  ev.poster = `assets/scene/moon.webp${V}`; ev.src = clipUrl("moon"); ev.className = "wide";
   ev.play().catch(() => {});
   await caption(T("那天晚上，外婆的收音机，第一次唱了歌。"), 2600);
   await new Promise((r) => { if (ev.ended) r(); ev.onended = r; setTimeout(r, 4000); });
-  ev.src = `assets/video/sleep.mp4${V}`; ev.className = "square";
+  ev.poster = `assets/scene/sleep.webp${V}`; ev.src = clipUrl("sleep"); ev.className = "square";
   ev.play().catch(() => {});
   await caption(T("小满关了灯。窗外的上海，还在小声讲话。"), 3000);
   await new Promise((r) => { if (ev.ended) r(); ev.onended = r; setTimeout(r, 3000); });
@@ -926,7 +1203,17 @@ async function playEnding() {
   showCredits();
 }
 
-const CREDITS = "《像素上海》视频与游戏 · 海辛 Hyacinth &amp; 阿文 Simon<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · AI 助手 Mouse 协助<br>沪语 / 四川话 / 普通话配音 · Seedance 2.5 生成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）";
+// 小红书会因工具名和 GitHub 链接限流：小工具版只署名、引导关注
+const CREDITS = [
+  "《像素上海》视频与游戏 · 海辛 Hyacinth &amp; 阿文 Simon",
+  ...(globalThis.__XHS__ ? [] : [
+    "场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成",
+    "剧本、程序、8-bit 编曲与音效 · AI 助手 Mouse 协助",
+    "沪语 / 四川话 / 普通话配音 · Seedance 2.5 生成",
+  ]),
+  "老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》",
+  "字体 Fusion Pixel Font（SIL OFL 1.1）",
+];
 function showCredits() {
   const c = $("#credits");
   const mins = Math.max(1, Math.round((Date.now() - S.started) / 60000));
@@ -934,17 +1221,18 @@ function showCredits() {
   c.innerHTML = `<h2>${T("像素上海：弄堂电台")}</h2>
     <div class="stats"><div><b>${totalCount()}</b><span>${T("段声音")}</span></div><div><b>${HU_CARDS.filter(has).length}</b><span>${T("句上海话")}</span></div><div><b>${mins}</b><span>${T("分钟")}</span></div></div>
     <div class="roll"><ul>${quotes}</ul></div>
-    <p class="thanks">${T(CREDITS)}</p>
+    ${globalThis.__XHS__ ? `<p class="follow">${T("喜欢的话，来小红书关注我们")}<br><b>@海辛Hyacinth</b>　<b>@Simon阿文</b></p>` : ""}
+    <p class="thanks">${CREDITS.map((ln) => T(ln)).join("<br>")}</p>
     <div class="cbtn"><button class="px-btn gold" id="c-card">${T("生成我的上海明信片")}</button><button class="px-btn gold" id="c-more">${T("继续寻找番外电台")}</button><button class="px-btn" id="c-title">${T("回到标题")}</button></div>`;
   c.classList.add("show");
   $("#c-card").onclick = (e) => { e.stopPropagation(); A.sfx("open"); showPostcard(); };
-  $("#c-more").onclick = async () => { c.classList.remove("show"); $("#ending").classList.remove("show"); app.classList.remove("ended"); $("#end-video").pause(); await travel("moon", { instant: true }); openTuner(); toast(T("试着把指针拨到 90.3、99.1 或 104.5")); };
+  $("#c-more").onclick = async () => { c.classList.remove("show"); $("#ending").classList.remove("show"); app.classList.remove("ended"); endVideo.pause(); await travel("moon", { instant: true }); openTuner(); toast(T("试着把指针拨到 90.3、99.1 或 104.5")); };
   $("#c-title").onclick = () => location.reload();
 }
 
 // ---------------------------------------------------------------- 明信片
 
-const loadImg = (src) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+const loadImg = (src) => loadImage(src);
 function wrapText(g, text, maxW) {
   if (/[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text)) {
     const out = [];
@@ -1026,29 +1314,52 @@ async function makePostcard() {
   y += lines.length * lh - lh + 58;
   g.fillStyle = "#8a5a3c"; g.font = "32px Px, sans-serif"; g.textAlign = "right"; g.fillText(`—— ${tSpeaker(pick.who, SPEAKERS[pick.who].name)}`, W - 90, y);
   // 小满
-  const me = await loadImg(`assets/portrait/xiaoman.png${V}`);
+  const me = await loadImg(imgUrl("assets/portrait/xiaoman.png"));
   if (me) { g.imageSmoothingEnabled = false; g.drawImage(me, 60, H - 322, 256, 256); }
   g.textAlign = "left"; g.fillStyle = "#231d35"; g.font = "40px Px, sans-serif"; g.fillText(T("像素上海：弄堂电台"), 330, H - 190);
   g.fillStyle = "#8a5a3c"; g.font = "26px Px, sans-serif";
   g.fillText(T("一台老收音机，一天，一座城的闲话"), 330, H - 140);
-  g.fillText("ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 96);
+  g.fillText(globalThis.__XHS__ ? `${T("小红书")} @海辛Hyacinth · @Simon阿文` : "ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai", 330, H - 96);
   return cv;
+}
+// 保存方式：网页点下载；小红书小工具（禁下载、禁长按菜单）存相册或直接发笔记
+const SAVE_HINT = globalThis.__XHS__ ? "存到相册，或直接发一篇笔记" : "长按图片或点下载保存";
+function saveButtons(file) {
+  if (globalThis.__XHS__) return `<button class="px-btn gold" data-act="save" data-i18n>存到相册</button><button class="px-btn gold" data-act="note" data-i18n>发笔记</button>`;
+  return `<a class="px-btn gold" data-act="dl" download="${T(file)}" data-i18n>下载</a>`;
+}
+function bindSave(box, note) {
+  box.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const url = box.dataset.url;
+    if (!url || b.dataset.act === "dl") return;
+    A.sfx("click");
+    try {
+      if (b.dataset.act === "save") { await saveImage(url); toast(T("已存到相册")); }
+      else await postImageNote(url, T(note.title), T(note.content));
+    } catch { toast(T("没有成功，再试一次")); }
+  }));
+}
+function setSaved(box, url) {
+  box.dataset.url = url;
+  box.querySelector("img").src = url;
+  const dl = box.querySelector('[data-act="dl"]');
+  if (dl) dl.href = url;
 }
 async function showPostcard() {
   let box = $("#postcard");
   if (!box) {
-    box = el("div", "panel", `<div class="p-win small pc-win"><div class="p-head"><h2 data-i18n>明信片</h2><div data-i18n>长按图片或点下载保存</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div><div class="pc-body"><img alt="我的上海明信片" data-i18n-alt></div><div class="row"><a class="px-btn gold" id="pc-dl" download="${T("像素上海明信片.png")}" data-i18n>下载</a><button class="px-btn" id="pc-again" data-i18n>换一句</button></div></div>`);
+    box = el("div", "panel", `<div class="p-win small pc-win"><div class="p-head"><h2 data-i18n>明信片</h2><div data-i18n>${SAVE_HINT}</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div><div class="pc-body"><img alt="我的上海明信片" data-i18n-alt></div><div class="row">${saveButtons("像素上海明信片.png")}<button class="px-btn" id="pc-again" data-i18n>换一句</button></div></div>`);
     applyStatic(box);
     box.id = "postcard";
     document.body.appendChild(box);
     box.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); box.classList.remove("open"); A.sfx("close"); });
     box.querySelector("#pc-again").addEventListener("click", (e) => { e.stopPropagation(); A.sfx("click"); showPostcard(); });
+    bindSave(box, { title: "我的上海明信片", content: "在《像素上海：弄堂电台》里收到一张上海明信片 #像素上海" });
   }
   box.classList.add("open");
   const cv = await makePostcard();
-  const url = cv.toDataURL("image/png");
-  box.querySelector("img").src = url;
-  box.querySelector("#pc-dl").href = url;
+  setSaved(box, cv.toDataURL("image/png"));
 }
 
 // 声音地图：每个地方收集到几段声音，画成一张可以保存的图
@@ -1101,22 +1412,21 @@ async function makeSoundMap() {
     bx += w + 16;
   }
   g.fillStyle = "#8a83a0"; g.font = "22px Px, sans-serif";
-  g.fillText(`${T("像素上海：弄堂电台")} · ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai`, 60, H - 56);
+  g.fillText(`${T("像素上海：弄堂电台")} · ${globalThis.__XHS__ ? `${T("小红书")} @海辛Hyacinth · @Simon阿文` : "ringhyacinth.github.io/hyacinth.im-site/pixel-shanghai"}`, 60, H - 56);
   return cv;
 }
 async function showSoundMap() {
   let box = $("#soundmap");
   if (!box) {
-    box = el("div", "panel", `<div class="p-win pc-win"><div class="p-head"><h2 data-i18n>声音地图</h2><div data-i18n>长按图片或点下载保存</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div><div class="pc-body"><img alt="我的上海声音地图" data-i18n-alt></div><div class="row"><a class="px-btn gold" id="sm-dl" download="${T("像素上海声音地图.png")}" data-i18n>下载</a></div></div>`);
+    box = el("div", "panel", `<div class="p-win pc-win"><div class="p-head"><h2 data-i18n>声音地图</h2><div data-i18n>${SAVE_HINT}</div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div><div class="pc-body"><img alt="我的上海声音地图" data-i18n-alt></div><div class="row">${saveButtons("像素上海声音地图.png")}</div></div>`);
     applyStatic(box);
     box.id = "soundmap";
     document.body.appendChild(box);
     box.querySelector(".x").addEventListener("click", (e) => { e.stopPropagation(); box.classList.remove("open"); A.sfx("close"); });
+    bindSave(box, { title: "我的上海声音地图", content: "在《像素上海：弄堂电台》里走了一天，收集到的上海声音 #像素上海" });
   }
   box.classList.add("open");
-  const url = (await makeSoundMap()).toDataURL("image/png");
-  box.querySelector("img").src = url;
-  box.querySelector("#sm-dl").href = url;
+  setSaved(box, (await makeSoundMap()).toDataURL("image/png"));
 }
 
 // ---------------------------------------------------------------- 启动
@@ -1141,8 +1451,9 @@ onLang(() => {
 });
 setLang(getLang());
 
-$("#tv").src = `assets/video/skyline.mp4${V}`;
-$("#tv").play().catch(() => {});
+titleVideo.poster = `assets/scene/skyline.webp${V}`;
+titleVideo.src = clipUrl("skyline");
+titleVideo.play().catch(() => {});
 document.fonts?.ready.then(() => app.classList.add("font-ready"));
 showTitle();
 preloadFirstScene();
@@ -1156,6 +1467,7 @@ window.__game = {
   interact: (id) => interact(current.hotspots.find((h) => h.id === id)), current: () => current?.id, busy: () => busy || holdPlaying || entering,
   dialogOpen: () => dialogOpen, advance: () => advance && advance(), choose: (n) => choiceKeys && choiceKeys(n),
   tune: (f) => { tuner.f = f; updateTuner(); }, mainCount, totalCount, setLang,
+  credits: showCredits,
   postcard: async () => (await makePostcard()).toDataURL("image/png"),
   soundmap: async () => (await makeSoundMap()).toDataURL("image/png"),
   defineSong: (name, def, tune) => { if (tune) A.registerTunes([tune]); A.defineSong(name, def); },

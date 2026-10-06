@@ -12,11 +12,12 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0d0b18">
 <link rel="icon" href="assets/item/radio.png">
-<link rel="preload" href="assets/font/fusion-pixel-zh.woff2?v=20260926b" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=20260926b">
+<link rel="preload" href="assets/font/fusion-pixel-zh.woff2?v=20261006c" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css?v=20261006c">
 </head>
 <body>
 <div id="app">
+  <div id="layout-insets" aria-hidden="true"></div>
   <div id="stage">
     <div id="layer">
       <video id="bgv" muted playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5-page" preload="auto"></video>
@@ -27,17 +28,27 @@
     <div class="grain"></div>
     <div id="pan-hint" class="hud" aria-hidden="true"><i>◀</i><i>▶</i></div>
     <div id="chip" class="hud"></div>
-    <div id="counter" class="hud"></div>
-    <div id="scene-left" class="hud"></div>
-    <div id="inv" class="hud"></div>
-    <div id="tools" class="hud">
+    <div id="radio-console">
+      <div id="console-meta">
+        <div id="scene-left" class="hud"></div>
+        <div id="counter" class="hud"></div>
+      </div>
+      <div id="console-route">
+        <button id="next" class="hud" hidden></button>
+        <div id="console-hint" data-i18n>点点街景，听听这里的故事</div>
+      </div>
+      <div id="inv" class="hud"></div>
+      <div id="listen-guide" class="hud" role="status" aria-live="polite" hidden></div>
+      <div id="tools" class="hud">
+      <button id="btn-bag" class="tool" title="背包" data-i18n-title><i class="ico bag"></i><span data-i18n>背包</span></button>
       <button id="btn-listen" class="tool" title="收听模式（空格）" data-i18n-title><i class="ico ear"></i><span data-i18n>收听</span></button>
       <button id="btn-tuner" class="tool" title="调频（T）" data-i18n-title><i class="ico dial"></i><span data-i18n>调频</span></button>
       <button id="btn-map" class="tool" title="地图（M）" data-i18n-title><i class="ico map"></i><span data-i18n>地图</span></button>
       <button id="btn-journal" class="tool" title="收集簿（J）" data-i18n-title><i class="ico book"></i><span data-i18n>收集簿</span></button>
-      <button id="btn-settings" class="tool small" title="设置" data-i18n-title><i class="ico gear"></i></button>
+      <button id="btn-settings" class="tool small" title="设置" data-i18n-title><i class="ico gear"></i><span class="portrait-label" data-i18n>设置</span></button>
+      </div>
+      <div id="console-hardware" aria-hidden="true"><div class="console-grille"></div><div class="console-brand"><span data-i18n>弄堂电台</span><small>SHANGHAI RADIO</small></div></div>
     </div>
-    <button id="next" class="hud" hidden></button>
     <button id="skip" class="hud" hidden data-i18n>跳过 ▸▸</button>
     <div id="scenecard"></div>
     <div id="toast"></div>
@@ -69,7 +80,7 @@
     <div class="p-win wide">
       <div class="p-head"><h2 data-i18n>上海 · 一天</h2><div id="map-progress"></div><button class="x" aria-label="关闭" data-i18n-aria>✕</button></div>
       <div class="map-wrap">
-        <img src="assets/scene/map.png?v=20260926b" alt="像素上海地图" data-i18n-alt>
+        <img src="assets/scene/map.png?v=20261006c" alt="像素上海地图" data-i18n-alt>
         <svg id="map-route" viewBox="0 0 100 56.25" preserveAspectRatio="none"></svg>
         <div id="map-pins"></div>
       </div>
@@ -147,6 +158,6 @@
   </div>
 </div>
 <noscript>这个小游戏需要开启 JavaScript。</noscript>
-<script type="module" src="js/main.js?v=20260926b"></script>
+<script type="module" src="js/main.js?v=20261006c"></script>
 </body>
 </html>

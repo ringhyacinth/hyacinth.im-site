@@ -1,5 +1,6 @@
 // 全部音乐与音效都在浏览器里实时合成：芯片乐、环境声、音效、角色“嘀嗒”语音；角色配音为预录 MP3。
-import { TUNES as TUNE_DATA } from "./tunes.js?v=20260926b";
+import { TUNES as TUNE_DATA } from "./tunes.js?v=20261006c";
+import { loadBytes } from "./platform.js?v=20261006c";
 
 let ctx = null;
 let master, musicBus, musicDuck, ambBus, sfxBus, voiceBus, radioBus, lineBus, lineRadio, noiseBuf;
@@ -134,31 +135,125 @@ export function duckMusic(level) {
 
 // ---------------------------------------------------------------- 角色配音
 
+// 解码后的配音按采样率展开（全部 244 句约 990 秒，48kHz 单声道约 190MB），只留最近用过的 VOICE_KEEP 句
+const VOICE_KEEP = 48;
 const voiceCache = new Map();
+const voiceLoads = new Map();
 export const voiceOn = () => Boolean(ctx) && settings.voice > 0.01;
 export function loadVoice(url) {
   if (!ctx) return Promise.resolve(null);
-  if (!voiceCache.has(url)) {
-    voiceCache.set(url, fetch(url)
-      .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-      .then((b) => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
-      .catch(() => { voiceCache.delete(url); return null; }));
+  if (voiceCache.has(url)) {
+    const p = voiceCache.get(url); voiceCache.delete(url); voiceCache.set(url, p);
+    return p;
   }
-  return voiceCache.get(url);
+  if (voiceLoads.has(url)) return voiceLoads.get(url);
+  if (decodeJobs.get(url)?.state === "hung" || decodeHung >= DECODE_MAX) return Promise.resolve(null);
+  // 尚未完成的任务单独去重，不会被 PCM 的 48 句 LRU 挤出后再次解码。
+  const p = loadBytes(url).then((b) => decodeVoice(b, url)).catch(() => null).finally(() => { if (voiceLoads.get(url) === p) voiceLoads.delete(url); });
+  voiceLoads.set(url, p);
+  return p;
 }
-let curVoice = null;
-export function stopVoice() {
+// 一段对话开头会把整段台词都预解码：同时最多解两句，正在等着播的那句插到最前（手机上并发解码会拖慢第一句）
+const DECODE_MAX = 2, DECODE_WAIT = 8000;
+const decodeQueue = [];
+const decodeJobs = new Map();
+let decoding = 0, decodeHung = 0, wantVoice = "";
+export const voiceDiag = () => ({ decoding, hung: decodeHung, queued: decodeQueue.map((j) => j.url), cached: voiceCache.size, pending: voiceLoads.size });
+function cacheVoice(url, buf) {
+  voiceCache.delete(url); voiceCache.set(url, Promise.resolve(buf));
+  while (voiceCache.size > VOICE_KEEP) voiceCache.delete(voiceCache.keys().next().value);
+}
+function decodeVoice(bytes, url) {
+  const previous = decodeJobs.get(url);
+  if (previous) return previous.promise;
+  if (decodeHung >= DECODE_MAX) return Promise.reject(new Error("voice decoder unavailable"));
+  const job = { bytes, url, state: "queued" };
+  job.promise = new Promise((res, rej) => { job.res = res; job.rej = rej; });
+  job.promise.catch(() => {});
+  decodeJobs.set(url, job);
+  decodeQueue.push(job);
+  job.timer = setTimeout(() => { dropDecode(job); pumpDecode(); }, DECODE_WAIT);
+  pumpDecode();
+  return job.promise;
+}
+function dropDecode(job) {
+  if (job.state !== "queued") return;
+  decodeQueue.splice(decodeQueue.indexOf(job), 1);
+  clearTimeout(job.timer);
+  job.state = "done"; job.bytes = null;
+  if (decodeJobs.get(job.url) === job) decodeJobs.delete(job.url);
+  job.rej(new Error("voice decode queue timeout"));
+}
+function pumpDecode() {
+  if (decodeHung >= DECODE_MAX) {
+    for (const job of [...decodeQueue]) dropDecode(job);
+    return;
+  }
+  while (decoding < DECODE_MAX && decodeQueue.length) {
+    const i = Math.max(0, decodeQueue.findIndex((j) => j.url === wantVoice));
+    const j = decodeQueue.splice(i, 1)[0];
+    clearTimeout(j.timer);
+    j.state = "active";
+    decoding++;
+    const settle = (err, buf) => {
+      if (j.state === "done") return;
+      if (j.state === "hung") decodeHung--;
+      decoding--;
+      j.state = "done";
+      clearTimeout(j.timer);
+      if (decodeJobs.get(j.url) === j) decodeJobs.delete(j.url);
+      if (err) j.rej(err);
+      else { cacheVoice(j.url, buf); j.res(buf); }
+      pumpDecode();
+    };
+    j.timer = setTimeout(() => {
+      // 原生解码没有取消接口。超时只结束调用者等待，仍占实际并发预算；迟到回调才释放。
+      j.state = "hung"; decodeHung++;
+      j.rej(new Error("voice decode timeout"));
+      pumpDecode();
+    }, DECODE_WAIT);
+    try {
+      const result = ctx.decodeAudioData(j.bytes, (buf) => settle(null, buf), (err) => settle(err));
+      // 新浏览器同时返回 Promise，旧 WebView 只调用回调；两条路径均消费，且只结算一次。
+      result?.then((buf) => settle(null, buf), (err) => settle(err));
+    } catch (err) { settle(err); }
+    j.bytes = null;
+  }
+}
+let curVoice = null, voiceSeq = 0, pendingVoice = null;
+function stopPlayingVoice() {
   if (!curVoice) return;
   const v = curVoice; curVoice = null;
   try { v.src.stop(); } catch {}
   v.finish();
 }
-export async function playVoice(url, { radio = false, wait = 900 } = {}) {
+export function stopVoice() {
+  voiceSeq++;
+  pendingVoice?.cancel(); pendingVoice = null;
+  stopPlayingVoice();
+}
+// 小工具核心配音已内嵌；给慢设备解码最多 10 秒，避免仅因超过旧 2.5 秒就漏掉当前句。网页版仍为 900ms。
+// 只有最后一次请求能开播（收集簿里连点两张卡的重听，先点的那张晚到时不会盖掉后一张）
+export async function playVoice(url, { radio = false, wait = globalThis.__XHS__ ? 10000 : 900 } = {}) {
   if (!voiceOn()) return null;
-  const buf = await Promise.race([loadVoice(url), new Promise((r) => setTimeout(() => r(null), wait))]);
-  if (!buf) return null;
-  stopVoice();
-  if (ctx.state === "suspended") ctx.resume();
+  const seq = ++voiceSeq;
+  pendingVoice?.cancel();
+  const pending = {};
+  const cancelled = new Promise((r) => { pending.cancel = () => r(null); });
+  pendingVoice = pending;
+  wantVoice = url;
+  let timer;
+  const buf = await Promise.race([loadVoice(url), cancelled, new Promise((r) => { timer = setTimeout(() => r(null), wait); })]);
+  clearTimeout(timer);
+  if (pendingVoice === pending) pendingVoice = null;
+  if (!buf || seq !== voiceSeq || !voiceOn()) return null;
+  // 上下文被挂起（切后台、iOS interrupted）时先恢复；恢复不了就当没有配音，打字机按默认速度走、不会等一个不会结束的声音
+  if (ctx.state !== "running") {
+    await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 400))]);
+    if (ctx.state !== "running" || seq !== voiceSeq) return null;
+  }
+  // 替换正在播放的音源，不调用公共 stopVoice，避免使自己的 seq 失效。
+  stopPlayingVoice();
   const src = ctx.createBufferSource();
   src.buffer = buf;
   src.connect(radio ? lineRadio : lineBus);

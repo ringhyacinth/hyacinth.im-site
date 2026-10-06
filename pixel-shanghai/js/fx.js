@@ -148,17 +148,31 @@ export function pixelWipe(canvas, dir = "in", ms = 520, color = "#0d0b18") {
   canvas.style.display = "block";
   return new Promise((resolve) => {
     const t0 = performance.now();
-    const step = (now) => {
-      const p = Math.min(1, (now - t0) / ms);
+    let done = false;
+    const draw = (p) => {
       g.clearRect(0, 0, cols, rows);
       g.fillStyle = color;
       for (const c of order) {
         const on = dir === "in" ? c.v < p * 1.02 : c.v >= p;
         if (on) g.fillRect(c.x, c.y, 1, 1);
       }
+    };
+    const end = () => {
+      if (done) return;
+      done = true;
+      draw(1);
+      if (dir === "out") canvas.style.display = "none";
+      resolve();
+    };
+    const step = (now) => {
+      if (done) return;
+      const p = Math.min(1, (now - t0) / ms);
+      draw(p);
       if (p < 1) requestAnimationFrame(step);
-      else { if (dir === "out") canvas.style.display = "none"; resolve(); }
+      else end();
     };
     requestAnimationFrame(step);
+    // 页面在后台或容器暂停了 requestAnimationFrame 时也要按时结束，否则换场景会一直卡在转场里
+    setTimeout(end, ms + 1000);
   });
 }

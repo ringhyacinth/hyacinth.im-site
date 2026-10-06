@@ -1,6 +1,6 @@
 // 中 / EN 切换。配音始终是原声，英文模式只换字幕与界面。
-import { lineId } from "./voice-id.js?v=20260926b";
-import { EN } from "./i18n-en.js?v=20260926b";
+import { lineId } from "./voice-id.js?v=20261006c";
+import { EN } from "./i18n-en.js?v=20261006c";
 
 const KEY = "pixel-shanghai-lang";
 let lang = (() => {
@@ -52,12 +52,24 @@ export function applyStatic(root = document) {
 }
 
 const UI = {
+  "收听中": "Listening",
+  "本场景隐藏声音还剩 {n} 段": "{n} hidden sounds left here",
+  "本场景隐藏声音已收齐": "All hidden sounds collected here",
+  "本场景没有隐藏声音": "No hidden sounds in this scene",
+  "收听中：点场景里的金色发光处，收集声音卡。": "Listening: tap the golden glow in the scene to collect sound cards.",
+  "点工具栏「收听」，再点场景里的金色发光处收集声音卡。": "Tap Listen in the toolbar, then the golden glow in the scene to collect sound cards.",
+  "可左右拖动场景寻找。": " Drag the scene sideways to search.",
+  "收听已开启：点场景里的金色发光处收音": "Listen is on: tap a golden glow in the scene",
+  "收听已关闭，可继续与街坊交谈": "Listen is off: keep chatting with the neighbours",
   // 标题
   "一台老收音机 · 一天 · 一座城的闲话": "One old radio · one day · a city full of voices",
   "开始新的一天": "Start a new day",
   "重新开始": "Start over",
   "继续": "Continue",
   "正在调频…": "Tuning in…",
+  "调频中…": "Tuning in…",
+  "正在准备语音…": "Preparing voice…",
+  "正在准备对话…": "Preparing dialogue…",
   '🎧 建议戴耳机 · 点亮的人和物件都能交谈 · 修好收音机后，<span class="kb-only">按空格</span><span class="touch-only">点「收听」</span>找到藏起来的声音':
     '🎧 Headphones recommended · Tap glowing people and things to talk · Once the radio works, <span class="kb-only">press Space</span><span class="touch-only">tap “Listen”</span> to find hidden sounds · Voices in Shanghainese with English subtitles',
   "《像素上海》视频与游戏 · 海辛 Hyacinth & 阿文 Simon": "“Pixel Shanghai” film & game by Hyacinth & Simon",
@@ -67,6 +79,7 @@ const UI = {
   "这个小游戏需要开启 JavaScript。": "This little game needs JavaScript.",
   // 工具栏与面板
   "收听": "Listen", "调频": "Tuner", "地图": "Map", "收集簿": "Journal", "设置": "Settings",
+  "背包": "Bag", "弄堂电台": "Lane Radio", "已收集": "Collected", "点点街景，听听这里的故事": "Tap the street to hear its stories",
   "收听模式（空格）": "Listen mode (Space)", "调频（T）": "Tuner (T)", "地图（M）": "Map (M)", "收集簿（J）": "Journal (J)",
   "跳过 ▸▸": "Skip ▸▸", "关闭": "Close",
   "声音收集簿": "Sound Journal", "声音卡": "Voices", "沪语小词典": "Shanghainese", "道具": "Items",
@@ -123,12 +136,21 @@ const UI = {
   "像素上海：弄堂电台": "Pixel Shanghai: Lane Radio",
   "段声音": "voices", "句上海话": "Shanghainese words", "分钟": "minutes", "个地方": "places",
   "生成我的上海明信片": "Make my Shanghai postcard", "继续寻找番外电台": "Find the bonus stations", "回到标题": "Back to title",
-  "《像素上海》视频与游戏 · 海辛 Hyacinth &amp; 阿文 Simon<br>场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成<br>剧本、程序、8-bit 编曲与音效 · AI 助手 Mouse 协助<br>沪语 / 四川话 / 普通话配音 · Seedance 2.5 生成<br>老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》<br>字体 Fusion Pixel Font（SIL OFL 1.1）":
-    "“Pixel Shanghai” film &amp; game by Hyacinth &amp; Simon<br>Scene animation from the original film · Characters and map generated with Nano Banana Pro<br>Story, code, 8-bit arrangements and sound · assisted by Mouse, an AI assistant<br>Shanghainese / Sichuanese / Mandarin voices generated with Seedance 2.5<br>Classic melodies: Chen Gexin “Night Shanghai”, “Rose, Rose, I Love You”, “By Suzhou Creek”, “Roses Bloom Everywhere” · Ren Guang “Colourful Clouds Chasing the Moon”, “Song of the Fishermen” · Nie Er “Newspaper Seller's Song” · Jiangnan tune “Purple Bamboo”<br>Font: Fusion Pixel Font (SIL OFL 1.1)",
+  "《像素上海》视频与游戏 · 海辛 Hyacinth &amp; 阿文 Simon": "“Pixel Shanghai” film &amp; game by Hyacinth &amp; Simon",
+  ...(globalThis.__XHS__ ? {} : {
+    "场景动画来自原片素材 · 角色与地图由 Nano Banana Pro 生成": "Scene animation from the original film · Characters and map generated with Nano Banana Pro",
+    "剧本、程序、8-bit 编曲与音效 · AI 助手 Mouse 协助": "Story, code, 8-bit arrangements and sound · assisted by Mouse, an AI assistant",
+    "沪语 / 四川话 / 普通话配音 · Seedance 2.5 生成": "Shanghainese / Sichuanese / Mandarin voices generated with Seedance 2.5",
+  }),
+  "老歌旋律：陈歌辛《夜上海》《玫瑰玫瑰我爱你》《苏州河边》《蔷薇处处开》· 任光《彩云追月》《渔光曲》· 聂耳《卖报歌》· 江南曲调《紫竹调》":
+    "Classic melodies: Chen Gexin “Night Shanghai”, “Rose, Rose, I Love You”, “By Suzhou Creek”, “Roses Bloom Everywhere” · Ren Guang “Colourful Clouds Chasing the Moon”, “Song of the Fishermen” · Nie Er “Newspaper Seller's Song” · Jiangnan tune “Purple Bamboo”",
+  "字体 Fusion Pixel Font（SIL OFL 1.1）": "Font: Fusion Pixel Font (SIL OFL 1.1)",
+  "喜欢的话，来小红书关注我们": "Like it? Follow us on Xiaohongshu", "小红书": "Xiaohongshu",
   // 明信片
   "明信片": "Postcard", "长按图片或点下载保存": "Long-press the image or tap Download",
-  "下载": "Download", "换一句": "Another quote", "我的上海明信片": "My Shanghai postcard", "像素上海明信片.png": "pixel-shanghai-postcard.png",
-  "声音地图": "Sound Map", "我的上海声音地图": "My Shanghai Sound Map", "像素上海声音地图.png": "pixel-shanghai-sound-map.png",
+  "下载": "Download", "换一句": "Another quote",
+  "存到相册，或直接发一篇笔记": "Save it to your album, or post it as a note", "存到相册": "Save to album", "发笔记": "Post a note", "已存到相册": "Saved to your album", "没有成功，再试一次": "That didn't work — try again", "我的上海明信片": "My Shanghai postcard", "像素上海明信片.png": "pixel-shanghai-postcard.png",
+  "声音地图": "Sound Map", "我的上海声音地图": "Shanghai Sound Map", "像素上海声音地图.png": "pixel-shanghai-sound-map.png",
   "收集了 {n}/{total} 段声音 · {h} 句上海话 · {p} 个地方": "{n}/{total} voices · {h} Shanghainese words · {p} places",
   "上海 · 弄堂电台": "SHANGHAI · LANE RADIO", "我的上海一天": "My Day in Shanghai",
   "一台老收音机，一天，一座城的闲话": "One old radio, one day, a city full of voices",
